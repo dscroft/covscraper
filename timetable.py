@@ -100,6 +100,7 @@ if __name__ == '__main__':
     pwd = None
     module = None
     date = None
+    liststudents = False
     
     options, args = getopt.getopt( sys.argv[1:], 'u:p:m:d:s', ["user=", "module=", "password=", "date=", "students"] )
 
@@ -113,8 +114,7 @@ if __name__ == '__main__':
             module = arg
         elif opt in ('-d', '--date'):
             date = dateutil.parser.parse( arg, dayfirst=True )
-        elif opt in ('-s'):
-            print( "list" )
+        elif opt in ('-s','--students'):
             liststudents = True
 
     if not usr:
@@ -132,6 +132,7 @@ if __name__ == '__main__':
         print "Using todays date" 
         date = datetime.datetime.now()
 
+    # pull and format timetable
     sessions = pull_timetable( usr, pwd, module, date )
 
     threads = [ threading.Thread(target=pull_session_details, args=(usr,pwd,i)) for i in sessions ]
@@ -139,18 +140,12 @@ if __name__ == '__main__':
     for thread in threads: thread.join()
 
     for session in sessions:
-        print( "{:8} {:2} to {:2} - Room {:6} - {:2} students - {}".format( session["start"].strftime("%A"), \
+        print "{:8} {:2} to {:2} - Room {:6} - {:2} students - {}".format( session["start"].strftime("%A"), \
                                                                 session["start"].hour, session["end"].hour, session["room"], \
-                                                                len(session["students"]), session["title"] ) )
+                                                                len(session["students"]), session["title"] )
+        if not liststudents: continue
 
-
-
-
-    
-
-    #print( soup )
-
-
-
+        for student in session["students"]:
+            print "\t{}".format( ", ".join( student ) )
 
 
