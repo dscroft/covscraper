@@ -4,7 +4,8 @@ from bs4 import BeautifulSoup
 import datetime, sys, re
 import json
 
-WEEKOFFSET = {"2017-2018": datetime.date(2017,7,16) }
+WEEKOFFSET = { "2016-2017": datetime.date(2016,7,17), \
+			   "2017-2018": datetime.date(2017,7,16) }
 
 def authenticate_session( user, password ):
 	url = "https://webapp.coventry.ac.uk/Timetable-main"
@@ -46,8 +47,9 @@ def get_register( session, slot ):
 						 week=cov_week(slot["start"]) )
 
 	response = session.get(url)
-
-	return _decode_register(response.text)
+	#print(url)
+	register = _decode_register(response.text)
+	return register
 
 
 def academic_year( date ):
@@ -57,7 +59,7 @@ def academic_year( date ):
 	if isinstance(date,datetime.datetime):
 		date = date.date()
 
-	orderedDates = sorted( list(WEEKOFFSET.items()), key=lambda x: x[1] )
+	orderedDates = sorted( list(WEEKOFFSET.items()), key=lambda x: x[1], reverse=True )
 
 	for n, d in orderedDates:
 		if date >= d:
@@ -72,7 +74,7 @@ def cov_week( date ):
 
 	if isinstance(date,datetime.datetime):
 		date = date.date()
-	
+
 	return (date - WEEKOFFSET[academic_year(date)]).days//7
 
 
