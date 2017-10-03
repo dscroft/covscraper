@@ -3,11 +3,13 @@ from requests_ntlm import HttpNtlmAuth
 from bs4 import BeautifulSoup
 import datetime, sys, re
 import json
+import urllib
 
 WEEKOFFSET = { "2016-2017": datetime.date(2016,7,17), \
 			   "2017-2018": datetime.date(2017,7,16) }
 
 def authenticate_session( user, password ):
+	"""log into the timetable system"""
 	url = "https://webapp.coventry.ac.uk/Timetable-main"
 	#headers = {'user-agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.115 Safari/537.36'}
 
@@ -19,6 +21,7 @@ def authenticate_session( user, password ):
 
 
 def get_lecturer_timetable( session, date=datetime.datetime.now() ):
+	"""get the sessions timetabled for the person used to authenticate the current session"""
 	url = "https://webapp.coventry.ac.uk/Timetable-main/Timetable/Lecturer#year={year}&month={month}&day={day}&view=agendaWeek"
 
 	response = session.get(url.format(year=date.year, month=date.month, day=date.day))
@@ -27,17 +30,18 @@ def get_lecturer_timetable( session, date=datetime.datetime.now() ):
 
 
 def get_timetable( session, module="", room="", course="", date=datetime.datetime.now() ):
+	"""get the sessions timetabled for a given module, room, course or any combination thereof"""
 	url = "https://webapp.coventry.ac.uk/Timetable-main/Timetable/Search?CourseId={course}&ModuleId={module}&RoomId={room}&viewtype=%2F&searchsetid={academicyear}&queryModule={module}&queryRoom={room}&queryCourse={course}&timetabletype=normal"
 
-	y, z = (date.year,date.year+1) if date.month >= 9 else (date.year-1,date.year)
-	academicyear = "{}-{}".format(y,z)
+	academicyear = academic_year(date)
 
-	response = session.get(url.format(module=module, room=room, course=course, academicyear=academicyear))
+	response = session.get(url.format(module=_url_safe(module), room=_url_safe(room), course=_url_safe(course), academicyear=academicyear))
 
 	return _decode_timetables( response.text )
 
 
 def get_register( session, slot ):
+	"""get the register for a timetabled slot"""
 	if "dummyUrl" in slot:
 		url = "https://webapp.coventry.ac.uk" + slot["dummyUrl"]
 	else:
@@ -53,6 +57,7 @@ def get_register( session, slot ):
 
 
 def academic_year( date ):
+	"""which academic year is a given date, takes a datetime.date or timetabled slot, returns a string"""
 	if isinstance(date,dict) and "start" in date:
 		date = date["start"]
 
@@ -69,6 +74,7 @@ def academic_year( date ):
 
 
 def cov_week( date ):
+	"""which academic week is a given date, takes a datetime.date or timetabled slot, returns an int"""
 	if isinstance(date,dict) and "start" in date:
 		date = date["start"]
 
@@ -78,7 +84,12 @@ def cov_week( date ):
 	return (date - WEEKOFFSET[academic_year(date)]).days//7
 
 
+def _url_safe( val ):
+	return urllib.parse.quote(val,safe="")
+
+
 def _decode_timetables( html ):
+	"""extract session information from timetable html page, returns list of dictionaries"""
 	sessionReg = re.compile(r"{[^}]*ourEventId[^}]*}", re.MULTILINE|re.DOTALL)
 	commentReg = re.compile(r"\s*//.*", re.MULTILINE)
 	dateReg = re.compile(r"new Date\((.*)\)", re.MULTILINE)
@@ -117,6 +128,7 @@ def _decode_timetables( html ):
 
 
 def _decode_register( html ):
+	"""extract register information from register html page, returns list of tuples"""
 	soup = BeautifulSoup( html, "lxml" )
 
 	students = []
