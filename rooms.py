@@ -1,5 +1,5 @@
 ROOMS = {
-"ASG31": {"desc":"", "size":None, "equip":("pc")},
+"ASG31": {"desc":"", "size":100, "equip":("pc")},
 "MFG15/16": {"desc":"", "size":None, "equip":("pc")},
 
 "ECM-01A": {"desc":"mathlab", "size":None},
