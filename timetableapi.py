@@ -123,6 +123,8 @@ def _decode_timetables( html ):
 				j[f] = set(j[f])
 
 		slots.append(j)
+        
+		slots = sorted(slots, key=lambda x: x["start"])
 
 	return slots
 
@@ -140,9 +142,11 @@ def _decode_register( html ):
 
 
 if __name__ == "__main__":
-	currentweek = 11 #cov_week(datetime.datetime.now())
+	import getpass
+	
+	currentweek = cov_week(datetime.datetime.now())
 
-	session = authenticate_session("USERNAME", "PASSWORD")
+	session = authenticate_session(input("username:"), getpass.getpass("password:"))
 	slots = get_timetable( session, module="121COM" )
 
 	for s in slots:
@@ -156,4 +160,3 @@ if __name__ == "__main__":
 
 
 	sys.exit(0)
-
