@@ -1,5 +1,5 @@
 import requests
-from requests_ntlm import HttpNtlmAuth
+from auth import *
 from bs4 import BeautifulSoup
 import datetime, sys, re
 import json
@@ -7,18 +7,6 @@ import urllib
 
 WEEKOFFSET = { "2016-2017": datetime.date(2016,7,17), \
 			   "2017-2018": datetime.date(2017,7,16) }
-
-def authenticate_session( user, password ):
-	"""log into the timetable system"""
-	url = "https://webapp.coventry.ac.uk/Timetable-main"
-	#headers = {'user-agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.115 Safari/537.36'}
-
-	session = requests.Session()
-	session.auth = HttpNtlmAuth("COVENTRY\\{}".format(user), password)
-	response = session.get(url)
-
-	return session
-
 
 def get_lecturer_timetable( session, date=datetime.datetime.now() ):
 	"""get the sessions timetabled for the person used to authenticate the current session"""
@@ -35,7 +23,7 @@ def get_timetable( session, module="", room="", course="", date=datetime.datetim
 
 	academicyear = academic_year(date)
 
-	response = session.get(url.format(module=_url_safe(module), room=_url_safe(room), course=_url_safe(course), academicyear=academicyear))
+	response = session.get(url.format(module=url_safe(module), room=url_safe(room), course=url_safe(course), academicyear=academicyear))
 
 	return _decode_timetables( response.text )
 
@@ -82,10 +70,6 @@ def cov_week( date ):
 		date = date.date()
 
 	return (date - WEEKOFFSET[academic_year(date)]).days//7
-
-
-def _url_safe( val ):
-	return urllib.parse.quote(val,safe="")
 
 
 def _decode_timetables( html ):
@@ -135,8 +119,10 @@ def _decode_register( html ):
 
 	students = []
 	for tr in soup.findAll("tr")[1:]:
-		student = tuple([td.text for td in tr.findAll("td")][:4])
-		students.append(student)
+		student = [td.text for td in tr.findAll("td")][:4]
+		student[1] = int(student[1])
+		if student[3] == "": student[3] = None
+		students.append(tuple(student))
 		
 	return students
 
