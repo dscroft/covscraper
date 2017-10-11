@@ -17,13 +17,14 @@ def get_lecturer_timetable( session, date=datetime.datetime.now() ):
 	return _decode_timetables( response.text )
 
 
-def get_timetable( session, module="", room="", course="", date=datetime.datetime.now() ):
-	"""get the sessions timetabled for a given module, room, course or any combination thereof"""
-	url = "https://webapp.coventry.ac.uk/Timetable-main/Timetable/Search?CourseId={course}&ModuleId={module}&RoomId={room}&viewtype=%2F&searchsetid={academicyear}&queryModule={module}&queryRoom={room}&queryCourse={course}&timetabletype=normal"
+def get_timetable( session, module="", room="", course="", uid="", date=datetime.datetime.now() ):
+	"""get the sessions timetabled for a given module, room, student uid, course or any combination thereof"""
+	url = "https://webapp.coventry.ac.uk/Timetable-main/Timetable/Search?CourseId={course}&ModuleId={module}&RoomId={room}&queryStudent={uid}&studentId={uid}&viewtype=%2F&searchsetid={academicyear}&queryModule={module}&queryRoom={room}&queryCourse={course}&timetabletype=normal"
 
 	academicyear = academic_year(date)
 
-	response = session.get(url.format(module=url_safe(module), room=url_safe(room), course=url_safe(course), academicyear=academicyear))
+	url = url.format(module=url_safe(module), room=url_safe(room), course=url_safe(course), uid=uid, academicyear=academicyear)
+	response = session.get(url)
 
 	return _decode_timetables( response.text )
 
@@ -38,8 +39,9 @@ def get_register( session, slot ):
 						 eventid=slot["ourEventId"], \
 						 week=cov_week(slot["start"]) )
 
+	
 	response = session.get(url)
-	#print(url)
+
 	register = _decode_register(response.text)
 	return register
 
@@ -76,9 +78,10 @@ def _decode_timetables( html ):
 	"""extract session information from timetable html page, returns list of dictionaries"""
 	sessionReg = re.compile(r"{[^}]*ourEventId[^}]*}", re.MULTILINE|re.DOTALL)
 	commentReg = re.compile(r"\s*//.*", re.MULTILINE)
+	quoteReg = re.compile( r"(^\"[^\"]*\":\s*\".*)(\")(.*\"[,\r\n])", re.MULTILINE ) 
 	dateReg = re.compile(r"new Date\((.*)\)", re.MULTILINE)
 	propReg = re.compile(r"(\w*)(:)", re.MULTILINE)
-
+	
 	slots = []
 
 	for match in sessionReg.findall(html):
@@ -86,7 +89,11 @@ def _decode_timetables( html ):
 		match = dateReg.sub(r'"\1"',match)
 		match = propReg.sub(r'"\1"\2',match)
 		match = match.replace("'", '"')
-
+		
+		# what complete bastard puts unescaped quotes in a string?
+		while quoteReg.search(match):
+			match = quoteReg.sub(r"\1\3", match)
+		
 		j = json.loads(match)
 
 		# decode dates
@@ -128,21 +135,66 @@ def _decode_register( html ):
 
 
 if __name__ == "__main__":
-	import getpass
+	import getpass, getopt
+	from rooms import ROOMS
 	
-	currentweek = cov_week(datetime.datetime.now())
+	usageTxt = "help"
+	
+	params = {"user": None, "pass": None, "room": "", "module": "", "course": "", "uid": "", "date": None}
+	week = cov_week(datetime.datetime.now())
+	
+	# configure flags
+	shortopts = "".join(["{:.1}:".format(i) for i in params])
+	longopts = ["help"]+["{}=".format(i) for i in params]
+	try:
+		opts, args = getopt.getopt(sys.argv[1:], shortopts, longopts)
+	except getopt.GetoptError as e:
+		print(e)
+		sys.exit(1)
+		
+	# process flags
+	for o, a in opts:
+		if o in ("-h", "--help"):
+			print(usageText)
+			sys.exit(1)
+		
+		for p in params:
+			if o in ("-{:.1}".format(p), "--{}".format(p)):
+				params[p] = a
 
-	session = authenticate_session(input("username:"), getpass.getpass("password:"))
-	slots = get_timetable( session, module="121COM" )
+	# handle defaults
+	params["date"] = datetime.datetime.strptime(params["date"], "%d/%m/%Y") if params["date"] else datetime.datetime.now()
+		
+	if not params["user"]: params["user"] = input("username: ")
+	if not params["pass"]: params["pass"] = getpass.getpass("password: ")
+		
+	currentweek = cov_week(params["date"])
 
+	# authenticate and get the timetable
+	session = authenticate_session(params["user"], params["pass"])
+	slots = get_timetable( session, module=params["module"], room=params["room"], course=params["course"], uid=params["uid"], date=params["date"] )
+	
+	# pretty printing
+	print( "Time   - Room     - Enr -> Stu/Cap - Module" )
 	for s in slots:
 		if cov_week(s) != currentweek: continue
 
 		register = get_register( session, s )
 
-		print( "{time} - {room} - {students}".format(room=s["room"], \
+		try:
+			capacity = int(ROOMS[s["room"]]["size"])
+		except (KeyError, TypeError):
+			capacity = "?"
+			
+		module = s["title"].split(", ")
+		module = module[0]+"..." if len(module) > 1 else module[0]	
+	
+		print( "{time} - {room:8} - {enrolled:3} -> {students:3}/{capacity:<3} - {module}".format(room=s["room"], \
 													time=s["start"].strftime("%a %H"), \
-													students=len(register)) )
+													students=len(register), \
+													enrolled=len([i for i in register if i[3]]), \
+			 										capacity=capacity, \
+													module=module) )
 
 
 	sys.exit(0)
