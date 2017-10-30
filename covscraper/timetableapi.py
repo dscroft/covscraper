@@ -1,10 +1,9 @@
 import requests
-from .auth import *
+import auth
 from bs4 import BeautifulSoup
 import datetime, sys, re
 import json
 import urllib
-import multiprocessing
 
 WEEKOFFSET = { "2016-2017": datetime.date(2016,7,17), \
 			   "2017-2018": datetime.date(2017,7,16) }
@@ -24,7 +23,7 @@ def get_timetable( session, module="", room="", course="", uid="", date=datetime
 
 	academicyear = academic_year(date)
 
-	url = url.format(module=url_safe(module), room=url_safe(room), course=url_safe(course), uid=uid, academicyear=academicyear)
+	url = url.format(module=auth.url_safe(module), room=auth.url_safe(room), course=auth.url_safe(course), uid=uid, academicyear=academicyear)
 	response = session.get(url)
 
 	return _decode_timetables( response.text )
@@ -44,20 +43,6 @@ def get_register( session, slot ):
 	slot["register"] = _decode_register(response.text)
 	
 	return slot
-
-class RegisterProcessor(object):
-	def __init__(self, user, pwd ):
-		self.session = authenticate_session(user, pwd)
-
-	def __call__(self, slot):		
-		return get_register( self.session, slot )
-
-def get_registers( user, pwd, slots ):
-	pool = multiprocessing.Pool(processes=20)
-	slots = pool.map( RegisterProcessor(user,pwd), slots, chunksize=10 )
-	pool.close()
-	
-	return slots
 
 
 def academic_year( date ):
@@ -185,12 +170,10 @@ if __name__ == "__main__":
 	currentweek = cov_week(params["date"])
 
 	# authenticate and get the timetable
-	session = authenticate_session(params["user"], params["pass"])
+	session = auth.Authenticator(params["user"], params["pass"])
 	slots = get_timetable( session, module=params["module"], room=params["room"], course=params["course"], uid=params["uid"], date=params["date"] )
 	
-	slots = [ s for s in slots if cov_week(s) == currentweek ]
-	
-	slots = get_registers( params["user"], params["pass"], slots )
+	slots = [ get_register(session,s) for s in slots if cov_week(s) == currentweek ]
 	
 	# pretty printing
 	print( "Time   - Room     - Enr -> Stu/Cap - Module" )

@@ -1,5 +1,5 @@
 import requests
-from .auth import *
+import auth
 from bs4 import BeautifulSoup
 import datetime, sys, re
 import json
@@ -9,11 +9,12 @@ class NoStudent(Exception):
 	def __init__(self, message):
 		self.message = message
 
-def get_student_details( session, uid):
+def get_student_details( session, uid ):
 	url = "https://webapp.coventry.ac.uk/Sonic/Student%20Records/StudentView.aspx?studid={uid}"
 
-	print(url.format(uid=uid))
+	#print(url.format(uid=uid))
 	response = session.get(url.format(uid=uid))
+	print(response.status_code)
   
 	return _decode_student( response.text )
 
@@ -61,8 +62,8 @@ def _decode_student( html ):
 if __name__ == "__main__":
 	import getpass
 
-	session = authenticate_session(input("username:"), getpass.getpass("password:"))
-	student = get_student_details( session, uid=input("student uid:") )
+	session = auth.Authenticator("", "")
+	student = get_student_details( session,  )
 	
 	
 	print(student)
