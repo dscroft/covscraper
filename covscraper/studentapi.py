@@ -1,5 +1,5 @@
 import requests
-import auth
+from covscraper import auth
 from bs4 import BeautifulSoup
 import datetime, sys, re
 import json

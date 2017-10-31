@@ -1,5 +1,4 @@
-
-import covscraper.auth
-import covscraper.timetableapi
-import covscraper.studentapi
-import covscraper.rooms
+from covscraper import auth
+from covscraper import timetableapi
+from covscraper import studentapi
+from covscraper import rooms
