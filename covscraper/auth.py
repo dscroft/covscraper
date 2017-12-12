@@ -46,8 +46,8 @@ class Authenticator(requests.sessions.Session):
 		self.username = username
 		self.password = password
 		
-	def get(self, url):
-		response = requests.sessions.Session.get(self, url)
+	def get(self, url, stream=False):
+		response = requests.sessions.Session.get(self, url, stream=stream)
 		
 		failCondition = lambda response: response.status_code in (401,403) or response.url in self.redirectPages
 		

@@ -2,6 +2,8 @@
 from covscraper import *
 import pytz
 import datetime
+import getpass
+import ics
 
 header = """BEGIN:VCALENDAR
 VERSION:2.0
@@ -42,7 +44,7 @@ if __name__ == "__main__":
 	tzUtc = pytz.timezone("Etc/UTC")
 	now = datetime.datetime.now()
 	
-	session = auth.authenticate_session("", "")
+	session = auth.Authenticator(input("username: "), getpass.getpass("password: "))
 	slots = timetableapi.get_lecturer_timetable(session)
 
 	cal = ics.Calendar()
@@ -51,7 +53,7 @@ if __name__ == "__main__":
 		
 		for c, s in enumerate(slots):
 			if s["title"] == "": continue
-			if cov_week(s) <= 5 or s["start"].year > 2017: continue
+			if timetableapi.cov_week(s) <= 5 or s["start"].year > 2017: continue
 
 			for attr in ("start","end"):
 				s[attr] = tzCoventry.localize(s[attr]).astimezone(tzUtc)
@@ -62,7 +64,7 @@ if __name__ == "__main__":
 							  title=s["title"], \
 							  room=s["room"], \
 							  eventid=s["ourEventId"], \
-							  week=cov_week(s["start"]) )
+							  week=timetableapi.cov_week(s["start"]) )
 			
 			f.write(e)
 			
