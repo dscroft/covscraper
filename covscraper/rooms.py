@@ -11,7 +11,7 @@ ROOMS = {
 
 "ECG-01":  {"desc":"",        "size":None},
 "ECG-02":  {"desc":"",        "size":None},
-"ECG-03":  {"desc":"",        "size":None, "equip":("pc")},
+"ECG-03":  {"desc":"",        "size":5*6, "equip":("pc")},
 "ECG-04":  {"desc":"",        "size":None},
 "ECG-12":  {"desc":"theta",   "size":None},
 "ECG-13":  {"desc":"",        "size":None},
