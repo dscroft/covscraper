@@ -24,7 +24,7 @@ ROOMS = {
 "ECG-36":  {"desc":"",        "size":None},
 
 "EC1-01":  {"desc":"pclab",    "size":10*6, "equip":("pc")},
-"EC1-02":  {"desc":"",         "size":None, "equip":("pc")},
+"EC1-02":  {"desc":"",         "size":None},
 "EC1-03":  {"desc":"",         "size":None},
 "EC1-11":  {"desc":"",         "size":None},
 "EC1-12":  {"desc":"",         "size":None},
@@ -44,8 +44,8 @@ ROOMS = {
 "EC2-02":  {"desc":"",         "size":None},
 "EC2-03":  {"desc":"",         "size":None},
 "EC2-04":  {"desc":"eleclab",  "size":None},
-"EC2-12":  {"desc":"",         "size":None},
-"EC2-13":  {"desc":"",         "size":None},
+"EC2-12":  {"desc":"",         "size":5*8},
+"EC2-13":  {"desc":"",         "size":7*6},
 "EC2-14":  {"desc":"gameslab", "size":None, "equip":("pc")},
 "EC2-24":  {"desc":"planet",   "size":None},
 "EC2-25":  {"desc":"planet",   "size":None}
