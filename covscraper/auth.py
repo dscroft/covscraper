@@ -91,7 +91,9 @@ def url_safe( val ):
     return urllib.parse.quote(val,safe="")
 
 if __name__ == "__main__":
-  
+    import io, csv
+    module = "122COM"
+
     session = requests.Session()
     
     response = session.get( "https://coventry.kuali.co/auth?return_to=https%3A%2F%2Fcoventry.kuali.co%2Fapps%2F" )
@@ -110,9 +112,33 @@ if __name__ == "__main__":
     
     response = session.post( url, data={"SAMLResponse": key} )
     
-    response = session.get( "https://coventry.kuali.co/api/v0/cm/search/results.csv?status=active&index=courses_latest&q=" )
+    # have to use a search param as doesn't return all the modules
+    url = "https://coventry.kuali.co/api/v0/cm/search/results.csv?index=courses_latest&q={module}".format(module=module)
+    response = session.get( url )
+     
+    # extract csv data
+    csvfile = io.StringIO( response.text )
+    csvdata = list( csv.reader( csvfile, delimiter=',' ) )
+   
+    # convert to dict of dicts, key is module code
+    modules = {}
+    modulesUid = {}
+    headers = csvdata[0]
+    for row in range(1,len(csvdata)):
+      fields = { key: val for key, val in zip(headers, csvdata[row]) }           
+      modules[fields["reversedCode"]] = fields
+      modulesUid[fields["reversedCode"]] = fields["id"]
+      
+    # get actual damn MID
+    url = "https://coventry.kuali.co/api/cm/courses/changes/{uid}?denormalize=true".format(uid=modulesUid[module])
+    response = session.get(url)
     
-    csvfile = response.text
+    middata = json.loads( response.text )
+    
+    print( middata )
+        
+   
+    
     
   
     #auth = Authenticator(sys.argv[1], sys.argv[2])
