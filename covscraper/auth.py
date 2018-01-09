@@ -20,17 +20,29 @@ class Authenticator(requests.sessions.Session):
         return response
 
     def __auth_kuali(self, url):
-        loginUrl = "https://coventry.kuali.co/auth?return_to=https%3A%2F%2Fcoventry.kuali.co%2Fapps%2F"
+        kualiUrl = "https://coventry.kuali.co/auth?return_to=https%3A%2F%2Fcoventry.kuali.co%2Fapps%2F"
+        shibbolethUrl = "https://idp2.coventry.ac.uk/idp/Authn/UserPassword"
+        
+        # shibboleth wont let us connect unless it looks like we've been redirected from an approved site
+        response = requests.sessions.Session.get(self, kualiUrl)
+        if response.status_code != 200:
+          raise AuthenticationFailure("Failed to load Kuali, HTTP {}".format(response.status_code))
 
-        response = requests.sessions.Session.get(self, loginUrl)
-        
-        postUrl = "https://idp2.coventry.ac.uk/idp/Authn/UserPassword"
-        
+        # post the auth data to shibboleth
+        data = {"j_username": self.username, "j_password": self.password}
+        response = requests.sessions.Session.post(self, shibbolethUrl, data=data)
+        if response.status_code != 200:
+          raise AuthenticationFailure("Failed to load shibboleth, HTTP {}".format(response.status_code))
 
-        response = requests.sessions.Session.post(self, loginUrl, data={"j_username": self.username, "j_password": self.password})
+        # extract the auth key and post it
+        soup = BeautifulSoup( response.text, "lxml" )
+        samlUrl = soup.find( "form", {"method": "post"} )["action"]
+        key = soup.find( "input", {"name": "SAMLResponse"} )["value"]
+        response = requests.sessions.Session.post(self, samlUrl, data={"SAMLResponse": key})
+        if response.status_code != 200:
+          raise AuthenticationFailure("Failed to post auth code, HTTP {}".format(response.status_code))
         
-        print( response.text )
-        
+        # get the actual page that we were after all this time
         response = requests.sessions.Session.get(self, url)
         
         return response
@@ -91,61 +103,11 @@ def url_safe( val ):
     return urllib.parse.quote(val,safe="")
 
 if __name__ == "__main__":
-    import io, csv
-    module = "122COM"
+    auth = Authenticator(sys.argv[1], sys.argv[2])
 
-    session = requests.Session()
-    
-    response = session.get( "https://coventry.kuali.co/auth?return_to=https%3A%2F%2Fcoventry.kuali.co%2Fapps%2F" )
-    if response.status_code != 200:
-      print( "error1" )
-      
-    data = {"j_username": sys.argv[1], "j_password": sys.argv[2]}
-    response = session.post( "https://idp2.coventry.ac.uk/idp/Authn/UserPassword", data=data )
-    if response.status_code != 200:
-      print( "error2" )
-      
-    soup = BeautifulSoup( response.text, "lxml" )
-    
-    url = soup.find( "form", {"method": "post"} )["action"]
-    key = soup.find( "input", {"name": "SAMLResponse"} )["value"]
-    
-    response = session.post( url, data={"SAMLResponse": key} )
-    
-    # have to use a search param as doesn't return all the modules
-    url = "https://coventry.kuali.co/api/v0/cm/search/results.csv?index=courses_latest&q={module}".format(module=module)
-    response = session.get( url )
-     
-    # extract csv data
-    csvfile = io.StringIO( response.text )
-    csvdata = list( csv.reader( csvfile, delimiter=',' ) )
-   
-    # convert to dict of dicts, key is module code
-    modules = {}
-    modulesUid = {}
-    headers = csvdata[0]
-    for row in range(1,len(csvdata)):
-      fields = { key: val for key, val in zip(headers, csvdata[row]) }           
-      modules[fields["reversedCode"]] = fields
-      modulesUid[fields["reversedCode"]] = fields["id"]
-      
-    # get actual damn MID
-    url = "https://coventry.kuali.co/api/cm/courses/changes/{uid}?denormalize=true".format(uid=modulesUid[module])
-    response = session.get(url)
-    
-    middata = json.loads( response.text )
-    
-    print( middata )
-        
-   
-    
-    
-  
-    #auth = Authenticator(sys.argv[1], sys.argv[2])
-
-    #response = auth.get("https://coventry.kuali.co/api/v0/cm/search/results.csv?status=active&index=courses_latest&q=")
-    #print(response)
-    #print()
+    response = auth.get("https://coventry.kuali.co/api/v0/cm/search/results.csv?status=active&index=courses_latest&q=122COM")
+    print(response.text)
+    print()
     
     #response = auth.get("https://webapp.coventry.ac.uk/Timetable-main")
     #print(response)
