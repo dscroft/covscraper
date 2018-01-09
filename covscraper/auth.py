@@ -65,7 +65,7 @@ class Authenticator(requests.sessions.Session):
 	
     domainRegex = re.compile(r"https{,1}://([\w\.\-]{1,})")
     authHandler = {"webapp.coventry.ac.uk": __auth_sonic, \
-                   "engagementdashboahttps://coventry.kuali.co/api/v0/cm/search/results.csv?status=active&index=courses_latest&q=rd.coventry.ac.uk": __auth_engage, \
+                   "engagementdashboard.coventry.ac.uk": __auth_engage, \
                    "coventry.kuali.co": __auth_kuali}
     redirectPages = ["https://engagementdashboard.coventry.ac.uk/login"]
 
