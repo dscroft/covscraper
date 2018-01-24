@@ -44,8 +44,15 @@ if __name__ == "__main__":
 	tzUtc = pytz.timezone("Etc/UTC")
 	now = datetime.datetime.now()
 	
+	params = {"user": None, "pass": None, "room": "", "module": "1PTCOM", "course": "ECU177-UNI-BSC-SEP", "uid": "", "date": None}
+
+# handle defaults
+	params["date"] = datetime.datetime.strptime(params["date"], "%d/%m/%Y") if params["date"] else datetime.datetime.now()
+
 	session = auth.Authenticator(input("username: "), getpass.getpass("password: "))
-	slots = timetableapi.get_lecturer_timetable(session)
+	
+	slots = timetableapi.get_timetable( session, module=params["module"], room=params["room"], course=params["course"], uid=params["uid"], date=params["date"] )
+    	#slots = timetableapi.get_lecturer_timetable(session)
 
 	cal = ics.Calendar()
 	with open("timetable.ics", "w") as f:
@@ -53,7 +60,7 @@ if __name__ == "__main__":
 		
 		for c, s in enumerate(slots):
 			if s["title"] == "": continue
-			if timetableapi.cov_week(s) <= 5 or s["start"].year > 2017: continue
+			if s["start"].year < 2018: continue
 
 			for attr in ("start","end"):
 				s[attr] = tzCoventry.localize(s[attr]).astimezone(tzUtc)

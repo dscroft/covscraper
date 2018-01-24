@@ -16,14 +16,13 @@ def get_lecturer_timetable( session, date=datetime.datetime.now() ):
 
     return _decode_timetables( response.text )
 
-
-def get_timetable( session, module="", room="", course="", uid="", date=datetime.datetime.now() ):
+def get_timetable( session, module="", room="", course="", uid="", lecturer="", date=datetime.datetime.now() ):
     """get the sessions timetabled for a given module, room, student uid, course or any combination thereof"""
-    url = "https://webapp.coventry.ac.uk/Timetable-main/Timetable/Search?CourseId={course}&ModuleId={module}&RoomId={room}&queryStudent={uid}&studentId={uid}&viewtype=%2F&searchsetid={academicyear}&queryModule={module}&queryRoom={room}&queryCourse={course}&timetabletype=normal"
+    url = "https://webapp.coventry.ac.uk/Timetable-main/Timetable/Search?CourseId={course}&ModuleId={module}&RoomId={room}&queryStudent={uid}&studentId={uid}&viewtype=%2F&searchsetid={academicyear}&queryModule={module}&queryLecturer={lecturer}&queryRoom={room}&queryCourse={course}&timetabletype=normal"
 
     academicyear = academic_year(date)
 
-    url = url.format(module=auth.url_safe(module), room=auth.url_safe(room), course=auth.url_safe(course), uid=uid, academicyear=academicyear)
+    url = url.format(module=auth.url_safe(module), room=auth.url_safe(room), course=auth.url_safe(course), lecturer=auth.url_safe(lecturer), uid=uid, academicyear=academicyear)
     response = session.get(url)
 
     return _decode_timetables( response.text )
