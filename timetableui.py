@@ -11,7 +11,7 @@ if __name__ == "__main__":
     
     # configure flags
     shortopts = "".join(["{:.1}:".format(i) for i in params])
-    longopts = ["help","students"]+["{}=".format(i) for i in params]
+    longopts = ["help","students","staff"]+["{}=".format(i) for i in params]
     try:
         opts, args = getopt.getopt(sys.argv[1:], shortopts, longopts)
     except getopt.GetoptError as e:
@@ -25,6 +25,8 @@ if __name__ == "__main__":
             sys.exit(1)
         elif o in ("-s", "--students"):
             params["students"] = True
+        elif o in ("-t", "--staff"):
+            params["staff"] = True
         
         for p in params:
             if o in ("-{:.1}".format(p), "--{}".format(p)):
@@ -47,7 +49,6 @@ if __name__ == "__main__":
     # pretty printing
     print( "Time   - Room     - Enr -> Stu/Cap - Module" )
     for s in slots:
-
         try:
             capacity = int(covscraper.rooms.ROOMS[s["room"]]["size"])
         except (KeyError, TypeError):
@@ -62,9 +63,13 @@ if __name__ == "__main__":
                                                     enrolled=len([i for i in s["register"] if i[3]]), \
                                                      capacity=capacity, \
                                                     module=module) )
-        
+
+        if "staff" in params:
+            for staff in s["lecturer"]:
+                print(" {}".format(staff))
+
         if "students" in params:
-            s = covscraper.timetableapi.get_register( session, s )
+            #s = covscraper.timetableapi.get_register( session, s )
             for student in s["register"]:
                 print(" "+", ".join([str(i) for i in student]))
 
