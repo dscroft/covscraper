@@ -48,5 +48,15 @@ ROOMS = {
 "EC2-13":  {"desc":"",         "size":7*6},
 "EC2-14":  {"desc":"gameslab", "size":None, "equip":("pc")},
 "EC2-24":  {"desc":"planet",   "size":None},
-"EC2-25":  {"desc":"planet",   "size":None}
+"EC2-25":  {"desc":"planet",   "size":None},
+
+"EC3-07": {"desc":"no students", "size":8},
+"EC3-35": {"desc":"no students", "size":24},
+"EC3-37": {"desc":"no students", "size":10},
+"EC3-42": {"desc":"no students", "size":8},
+
+"EC4-11": {"desc":"dean office - no students", "size":None},
+"EC4-32": {"desc":"no students", "size":18},
+"EC4-34": {"desc":"no students", "size":6},
+"EC4-38": {"desc":"no students", "size":8}
 }
