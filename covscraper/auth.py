@@ -14,10 +14,10 @@ class Authenticator(requests.sessions.Session):
         loginUrl = "https://webapp.coventry.ac.uk/Sonic"
 
         self.auth = HttpNtlmAuth("COVENTRY\\{}".format(self.username), self.password)
-        response = requests.sessions.Session.get(self, url)
-        self.auth = None
+        #response = requests.sessions.Session.get(self, url)
+        #self.auth = None
 
-        return response
+        #return response
 
     def __auth_kuali(self, url):
         kualiUrl = "https://coventry.kuali.co/auth?return_to=https%3A%2F%2Fcoventry.kuali.co%2Fapps%2F"
@@ -43,9 +43,9 @@ class Authenticator(requests.sessions.Session):
           raise AuthenticationFailure("Failed to post auth code, HTTP {}".format(response.status_code))
         
         # get the actual page that we were after all this time
-        response = requests.sessions.Session.get(self, url)
+        #response = requests.sessions.Session.get(self, url)
         
-        return response
+        #return response
     
     def __auth_engage(self, url):
         loginUrl = "https://engagementdashboard.coventry.ac.uk/login"
@@ -59,43 +59,73 @@ class Authenticator(requests.sessions.Session):
                  "_csrf": hidden}
         self.post(loginUrl, data=payload)
 
-        response = requests.sessions.Session.get(self, url)
+        #response = requests.sessions.Session.get(self, url)
 
-        return response
+        #return response
+    
+    def __auth_moodle(self, url):
+        loginUrl = "https://cumoodle.coventry.ac.uk/login/index.php"
+        
+        data = {"username": self.username, "password": self.password}
+        response = requests.sessions.Session.post(self, loginUrl, data=data)
+        if response.status_code != 200:
+          raise AuthenticationFailure("Failed to load Moodle, HTTP {}".format(response.status_code))
+          
+        #response = requests.sessions.Session.get(self, url)
+        #return response
+        
 	
     domainRegex = re.compile(r"https{,1}://([\w\.\-]{1,})")
     authHandler = {"webapp.coventry.ac.uk": __auth_sonic, \
                    "engagementdashboard.coventry.ac.uk": __auth_engage, \
-                   "coventry.kuali.co": __auth_kuali}
-    redirectPages = ["https://engagementdashboard.coventry.ac.uk/login"]
+                   "coventry.kuali.co": __auth_kuali, \
+                   "cumoodle.coventry.ac.uk": __auth_moodle}
+    redirectPages = ["https://engagementdashboard.coventry.ac.uk/login", \
+                     "https://cumoodle.coventry.ac.uk/login/index.php"]
 
     def __init__(self, username, password):
         requests.sessions.Session.__init__(self)
 
         self.username = username
         self.password = password
-		
-    def get(self, url, stream=False):
-        response = requests.sessions.Session.get(self, url, stream=stream)
 
-        failCondition = lambda response: not response or response.status_code in (401,403) or response.url in self.redirectPages
+    def __run_handler(self, response):
+      domain = self.domainRegex.search(response.url)
+      if domain:
+        domain = domain.group(1)
+        try:
+          func = self.authHandler[domain]
+          func(self,None)
+        except KeyError: pass
+          
+        
+    def get(self, url, *args, **kwargs):
+        response = requests.sessions.Session.get(self, url, *args, **kwargs)
+
+        failCondition = lambda response: response.status_code in (401,403) or response.url in self.redirectPages
              
-        if failCondition(response):               # if the page failed or we got redirected to anything in redirectPages
-            domain = self.domainRegex.search(response.url) # figure out what domain we ended up at
-
-            if domain:
-                domain = domain.group(1)
-                try:
-                  func = self.authHandler[domain] # see if we know how to authenticate on this domain
-                  response = func(self, url)      # authenticate
-                except KeyError: pass
+        if failCondition(response):               # if the page failed or we got redirected to anything in redirectPages  
+            self.__run_handler( response )
+            response = requests.sessions.Session.get(self, url, *args, **kwargs)
 
         if failCondition(response):               # if it still didn't work give up
             raise AuthenticationFailure("Could not authenticate")
 
         return response
 
-		
+    def post(self,url, *args, **kwargs):
+        response = requests.sessions.Session.post(self, url, *args, **kwargs)
+
+        failCondition = lambda response: response.status_code in (401,403) or response.url in self.redirectPages
+             
+        if failCondition(response):               # if the page failed or we got redirected to anything in redirectPages
+            self.__run_handler( response )
+            response = requests.sessions.Session.post(self, url, *args, **kwargs)
+                
+        if failCondition(response):               # if it still didn't work give up
+            raise AuthenticationFailure("Could not authenticate")
+
+        return response
 		
 
 
@@ -105,7 +135,7 @@ def url_safe( val ):
 if __name__ == "__main__":
     auth = Authenticator(sys.argv[1], sys.argv[2])
 
-    response = auth.get("https://coventry.kuali.co/api/v0/cm/search/results.csv?status=active&index=courses_latest&q=122COM")
+    response = auth.get("https://cumoodle.coventry.ac.uk/grade/report/grader/index.php?id=47437")
     print(response.text)
     print()
     
