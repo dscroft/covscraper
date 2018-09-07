@@ -6,7 +6,7 @@ import sys
 if __name__ == "__main__":
     usageTxt = "help"
     
-    params = {"user": None, "pass": None, "room": "", "module": "", "course": "", "uid": "", "date": None}
+    params = {"user": None, "pass": None, "room": "", "module": "", "course": "", "uid": "", "stage", "", "date": None}
     week = covscraper.timetableapi.cov_week(datetime.datetime.now())
     
     # configure flags
@@ -23,7 +23,7 @@ if __name__ == "__main__":
         if o in ("-h", "--help"):
             print(usageText)
             sys.exit(1)
-        elif o in ("-s", "--students"):
+        elif o in ("--students"):
             params["students"] = True
         elif o in ("-t", "--staff"):
             params["staff"] = True
@@ -42,7 +42,7 @@ if __name__ == "__main__":
 
     # authenticate and get the timetable
     session = covscraper.auth.Authenticator(params["user"], params["pass"])
-    slots = covscraper.timetableapi.get_timetable( session, module=params["module"], room=params["room"], course=params["course"], uid=params["uid"], date=params["date"] )
+    slots = covscraper.timetableapi.get_timetable( session, module=params["module"], room=params["room"], course=params["course"], uid=params["uid"], stage=params["stage"], date=params["date"] )
     
     slots = [ covscraper.timetableapi.get_register(session,s) for s in slots if covscraper.timetableapi.cov_week(s) == currentweek ]
     
