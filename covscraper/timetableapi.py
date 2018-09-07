@@ -17,7 +17,7 @@ def get_lecturer_timetable( session, date=datetime.datetime.now() ):
 
     return _decode_timetables( response.text )
 
-def get_timetable( session, module="", room="", course="", uid="", lecturer="", stage="" date=datetime.datetime.now() ):
+def get_timetable( session, module="", room="", course="", uid="", lecturer="", stage="", date=datetime.datetime.now() ):
     """get the sessions timetabled for a given module, room, student uid, course or any combination thereof"""
     url = "https://webapp.coventry.ac.uk/Timetable-main/Timetable/Search?CourseId={course}&ModuleId={module}&RoomId={room}&queryStudent={uid}&studentId={uid}&viewtype=%2F&searchsetid={academicyear}&queryModule={module}&queryLecturer={lecturer}&queryRoom={room}&queryCourse={course}&Stg={stage}&timetabletype=normal"
 

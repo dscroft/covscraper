@@ -6,7 +6,7 @@ import sys
 if __name__ == "__main__":
     usageTxt = "help"
     
-    params = {"user": None, "pass": None, "room": "", "module": "", "course": "", "uid": "", "stage", "", "date": None}
+    params = {"user": None, "pass": None, "room": "", "module": "", "course": "", "uid": "", "stage": "", "date": None}
     week = covscraper.timetableapi.cov_week(datetime.datetime.now())
     
     # configure flags
