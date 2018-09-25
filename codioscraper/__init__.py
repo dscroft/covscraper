@@ -188,7 +188,7 @@ class Codio:
 if __name__ == "__main__":
 	import re
 
-	codio = Codio("ac0745@coventry.ac.uk","")
+	codio = Codio("@coventry.ac.uk","")
 	
 
 	organisation = codio.get_organisation_details()
@@ -199,20 +199,6 @@ if __name__ == "__main__":
 		if "aaa" in val["name"]:
 			print( key, val )
 
-	orgId = "4aa0a172-ce09-41c8-a361-872bca239cfc"
-	removeId = "f6875630-6636-4627-838f-65529f586eff"
-
-	#print( ">", codio._remove_student( removeId, orgId, True ) )
 
 
-#{"object":"OrganizationManager","method":"removeDummyAccount","data":{"orgId":"4aa0a172-ce09-41c8-a361-872bca239cfc","dummyId":"00112233-4455-6677-abe0-6d9465be9bdb"}}
 
-
-# remove from students
-#{"object":"class","method":"removeFromAggregatedEduTeam","data":{"organizationId":"4aa0a172-ce09-41c8-a361-872bca239cfc","teamSlug":"students","memberIds":["f6875630-6636-4627-838f-65529f586eff"]},"params":{"session_id":"0e39c2c8-66b6-456f-8fc6-7de2841aa6c8"}}
-
-
-# remove from org
-#{"object":"OrganizationManager","method":"removeMembers","data":{"orgId":"4aa0a172-ce09-41c8-a361-872bca239cfc","memberIds":["f6875630-6636-4627-838f-65529f586eff"]}}
-
-	
