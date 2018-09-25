@@ -40,6 +40,8 @@ def get_grades( session, module ):
     keyRegex = re.compile( r"\"sesskey\":\"([^\"]*)\"" )
     sesskey = keyRegex.search( response.text ).group(1)
 
+    #print( response.text )
+
     soup = BeautifulSoup( response.text, "lxml" )
     items = [ int(e["data-itemid"]) for e in soup.findAll("th") if e.has_attr("data-itemid") ]
 
