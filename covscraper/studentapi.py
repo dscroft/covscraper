@@ -1,7 +1,7 @@
 import requests
 from covscraper import auth
 from bs4 import BeautifulSoup
-import datetime, sys, re
+import datetime, sys, re, time
 import json
 import urllib
 
@@ -17,7 +17,41 @@ def get_student_details( session, uid ):
       
     return _decode_student( response.text )
 
+def get_engagement( session, uid ):
+  url = "https://webapp.coventry.ac.uk/Sonic/Student%20Records/AttendanceMonitoring/IndividualAttendance.aspx?studentid={uid}" 
+   
+  response = session.get(url.format(uid=uid))
+  return _decode_engagement( response.text )
 
+def _decode_engagement( html ):
+  soup = BeautifulSoup( html, "lxml" )
+  
+  engagementTable = soup.find( "table", {"id":"ctl00_ctl00_BodyContentPlaceHolder_MainContentPlaceHolder_attendanceDetail_ctl00"} )
+  if not engagementTable:
+    raise NoStudent("Student does not exist")
+
+  # get summary data
+  yearAttendance = soup.find("span", {"id":"ctl00_ctl00_BodyContentPlaceHolder_MainContentPlaceHolder_yearAtt"})
+  semesterAttendance = soup.find("span", {"id":"ctl00_ctl00_BodyContentPlaceHolder_MainContentPlaceHolder_semesterAtt"})
+  
+  result = {"year": float(yearAttendance.text.strip("%")),
+            "semester": float(semesterAttendance.text.strip("%")),
+            "sessions":[]}    
+    
+  # get individual session data
+  headers = ("date","start","end","module","room","session","status","type","info")
+  sessions = []  
+  for row in engagementTable.find_all( "tr" ):
+    s = {header: val.text for header, val in zip(headers,row.find_all("td"))}
+    if s != {}: result["sessions"].append(s)
+
+  for s in result["sessions"]:
+    s["start"] = datetime.datetime.strptime(s["date"]+" "+s["start"], "%d/%m/%Y %H:%M")
+    s["end"] = datetime.datetime.strptime(s["date"]+" "+s["end"], "%d/%m/%Y %H:%M")
+    s["date"] = datetime.datetime.strptime(s["date"],"%d/%m/%Y").date()
+
+  return result   
+  
 def _decode_student( html ):
     """extract register information from student information page, returns dict"""
     soup = BeautifulSoup( html, "lxml" )
