@@ -29,6 +29,9 @@ def _decode_grades( csvstr ):
         marks[uid] = details
 
     return marks
+
+def student_ids( session, module ):
+    return get_grades( session, module ).keys()
     
   
 def get_grades( session, module ):
