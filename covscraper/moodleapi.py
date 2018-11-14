@@ -3,7 +3,10 @@ from covscraper import auth
 import csv, io, re
 from bs4 import BeautifulSoup
 
-def _decode_grades( csvstr ):
+def student_ids( session, module ):
+  return tuple(get_grades( session, module ).keys())
+
+def _decode_grades( csvstr ):  
     headers = {"Email address":"email",
                "First name":"forename",
                "Surname":"surname",

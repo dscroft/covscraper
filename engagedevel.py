@@ -3,8 +3,6 @@ import covscraper
 import datetime
 import sys, time
 import multiprocessing as mp
-import pickle
-
 
 def worker_init(username, password):
   import covscraper
@@ -59,7 +57,6 @@ if __name__ == "__main__":
   
   #print(student)
   
-    
-    
+
     
     
