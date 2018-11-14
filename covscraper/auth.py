@@ -63,11 +63,16 @@ class Authenticator(requests.sessions.Session):
 
         #return response
     
-    def __auth_moodle(self, url):
+    def __auth_moodle(self, response):
         loginUrl = "https://cumoodle.coventry.ac.uk/login/index.php"
-        
-        data = {"username": self.username, "password": self.password}
+
+        response = requests.sessions.Session.get(self, loginUrl)
+        soup = BeautifulSoup( response.text, "lxml" )
+        token = soup.find( "input", {"name": "logintoken"} )["value"]
+
+        data = {"username": self.username, "password": self.password, "logintoken": token}
         response = requests.sessions.Session.post(self, loginUrl, data=data)
+
         if response.status_code != 200:
           raise AuthenticationFailure("Failed to load Moodle, HTTP {}".format(response.status_code))
           
@@ -79,7 +84,7 @@ class Authenticator(requests.sessions.Session):
     authHandler = {"webapp.coventry.ac.uk": __auth_sonic, \
                    "engagementdashboard.coventry.ac.uk": __auth_engage, \
                    "coventry.kuali.co": __auth_kuali, \
-                   "cumoodle.coventry.ac.uk": __auth_moodle}
+                   "cumoodle.coventry.ac.uk": __auth_moodle }
     redirectPages = ["https://engagementdashboard.coventry.ac.uk/login", \
                      "https://cumoodle.coventry.ac.uk/login/index.php"]
 
@@ -106,6 +111,7 @@ class Authenticator(requests.sessions.Session):
              
         if failCondition(response):               # if the page failed or we got redirected to anything in redirectPages  
             self.__run_handler( response )
+
             response = requests.sessions.Session.get(self, url, *args, **kwargs)
 
         if failCondition(response):               # if it still didn't work give up

@@ -34,7 +34,7 @@ def _decode_grades( csvstr ):
     return marks
 
 def student_ids( session, module ):
-    return get_grades( session, module ).keys()
+    return list(get_grades( session, module ).keys())
     
   
 def get_grades( session, module ):

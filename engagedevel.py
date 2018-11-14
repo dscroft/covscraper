@@ -22,41 +22,25 @@ if __name__ == "__main__":
   moodleId = 60031
   students = covscraper.moodleapi.student_ids( session, moodleId )
 
+  print( students )
+
   engagement = {}
 
   with mp.Pool(processes=20, initializer=lambda: worker_init(username, password)) as pool:
     for count, (uid, data) in enumerate(pool.imap_unordered( worker, students )):
       engagement[uid] = data
-      print(count, uid, data["year"])
-
-  #with open( "devel.dat", "wb" ) as f:
-    #pickle.dump( engagement, f )
-
-
-
-    
+      print( "{}/{}".format(count+1,len(students)), end="\r" )
+      sys.stdout.flush()
+    print()
+      
+  for student, data in engagement.items():
+    attendance = [ (i["start"],i["status"]) for i in data["sessions"] if i["module"] == "4000CEM" ]
+    attendance = sorted( attendance, key=lambda i: i[0] )
+    attendance = [ i[1] for i in attendance ]
+    print( student, attendance )
 
   
   sys.exit()
-
-
-
-
-  
-  for count, uid in enumerate(students):
-    #print( "{}/{}".format(count+1,len(students)),end="\r")
-    #sys.stdout.flush()
-    
-    engagement = covscraper.studentapi.get_engagement( session, uid )
-    print( count+1, len(students), engagement["year"])
-    
-  print()
-  
-  
-  
-  
-  #print(student)
-  
 
     
     
