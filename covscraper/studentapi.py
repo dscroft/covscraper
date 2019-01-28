@@ -17,11 +17,50 @@ def get_student_details( session, uid ):
       
     return _decode_student( response.text )
 
-def get_engagement( session, uid ):
+def get_attendance( engagement, latest=False ):
+    absolute = { "On Time": 0, "Absent": 0, "Optional": 0, "Wrong Location": 0, "Late": 0 }
+    percent = {"confirmed": 0, "possible": 0, "late": 0}
+
+    if len(engagement["sessions"]) == 0:
+      return absolute, percent
+
+    if latest:
+      engagement["sessions"] = sorted( engagement["sessions"], key=lambda i: i["start"], reverse=True )
+
+      firstStatus = engagement["sessions"][0]["status"]
+      for s in engagement["sessions"]:
+        if s["status"] == firstStatus:
+          absolute[ firstStatus ] += 1
+        else: break
+
+    else:
+      for s in engagement["sessions"]:
+        if s["status"] in absolute:
+          absolute[s["status"]] += 1
+
+    absolute["Attended"] = absolute["On Time"] + absolute["Late"]
+
+    total = sum([ v for k, v in absolute.items() if k != "future"])
+
+    #percent["confirmed"] = absolute["On Time"]
+    #percent["late"]      = absolute["On Time"] + absolute["Late"]
+    #percent["possible"]  = absolute["On Time"] + absolute["Late"] + absolute["future"]
+
+    #percent = { k: v/total*100 for k, v in percent.items() }
+        
+    return absolute, percent
+
+def get_engagement( session, uid, attempts=5 ):
   url = "https://webapp.coventry.ac.uk/Sonic/Student%20Records/AttendanceMonitoring/IndividualAttendance.aspx?studentid={uid}" 
    
-  response = session.get(url.format(uid=uid))
-  return _decode_engagement( response.text )
+  for i in range(attempts):
+    try:
+      response = session.get(url.format(uid=uid))
+      return _decode_engagement( response.text )
+    except ValueError:
+      continue
+    
+  return None
 
 def _decode_engagement( html ):
   soup = BeautifulSoup( html, "lxml" )
@@ -33,22 +72,30 @@ def _decode_engagement( html ):
   # get summary data
   yearAttendance = soup.find("span", {"id":"ctl00_ctl00_BodyContentPlaceHolder_MainContentPlaceHolder_yearAtt"})
   semesterAttendance = soup.find("span", {"id":"ctl00_ctl00_BodyContentPlaceHolder_MainContentPlaceHolder_semesterAtt"})
-  
-  result = {"year": float(yearAttendance.text.strip("%")),
-            "semester": float(semesterAttendance.text.strip("%")),
-            "sessions":[]}    
+
+  result = {"semester": float(semesterAttendance.text.strip("%"))}
+
+  try: result["year"] = float(yearAttendance.text.strip("%"))
+  except ValueError: result["year"] = None
     
   # get individual session data
   headers = ("date","start","end","module","room","session","status","type","info")
-  sessions = []  
+  sessions = []
   for row in engagementTable.find_all( "tr" ):
     s = {header: val.text for header, val in zip(headers,row.find_all("td"))}
-    if s != {}: result["sessions"].append(s)
+    if s != {}: sessions.append(s)
 
-  for s in result["sessions"]:
+  for s in sessions:
     s["start"] = datetime.datetime.strptime(s["date"]+" "+s["start"], "%d/%m/%Y %H:%M")
     s["end"] = datetime.datetime.strptime(s["date"]+" "+s["end"], "%d/%m/%Y %H:%M")
     s["date"] = datetime.datetime.strptime(s["date"],"%d/%m/%Y").date()
+
+  #print( [dict(t) for t in {tuple(d.items()) for d in sessions}] )
+
+  sessions = set( tuple(sorted(s.items(),key=lambda i:i[0])) for s in sessions )
+  sessions = [ {key: val for key, val in s} for s in sessions ]
+
+  result["sessions"] = sessions
 
   return result   
   

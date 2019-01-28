@@ -2,16 +2,50 @@ import getpass, getopt
 import covscraper
 import datetime
 import sys, json
+import multiprocessing as mp
+
+class Processor:
+  def __init__(self, credentials, module=None, since=None, till=None, latest=None):
+    self.sessions = {}
+    self.credentials = credentials
+    self.module = module
+    self.since = since
+    self.till = till
+    self.latest = latest
+
+  def get_session(self):
+    pid = mp.current_process().name
+    if pid not in self.sessions:
+      self.sessions[pid] = covscraper.auth.Authenticator( *self.credentials )
+
+    return self.sessions[pid]
+
+  def __call__(self, uid):
+    engagement = covscraper.studentapi.get_engagement( self.get_session(), uid )
+    
+    if self.module: engagement["sessions"] = [ s for s in engagement["sessions"] if s["module"] == self.module ]
+    if self.since: engagement["sessions"] = [ s for s in engagement["sessions"] if s["start"] >= self.since ]
+    if self.till: engagement["sessions"] = [ s for s in engagement["sessions"] if s["start"] <= self.till ]
+
+    attendance, _ = covscraper.studentapi.get_attendance( engagement, self.latest )
+
+    return uid, attendance
+
 
 if __name__ == "__main__":
     usageTxt = "help"
     
-    params = {"user": None, "pass": None, "module": None, "till": None, "from": None, "raw": None}
-    week = covscraper.timetableapi.cov_week(datetime.datetime.now())
-    
+    user = None
+    pwd = None
+    module = None
+    till = None
+    since = None
+    workers = 20
+    latest = False
+   
     # configure flags
-    shortopts = "".join(["{:.1}:".format(i) for i in params])
-    longopts = ["help"]+["{}=".format(i) for i in params]
+    shortopts = "u:p:m:t:s:w:lh"
+    longopts = ["user=","pass=","module=","till=","since=","workers=","help","latest"]
     try:
         opts, args = getopt.getopt(sys.argv[1:], shortopts, longopts)
     except getopt.GetoptError as e:
@@ -23,66 +57,38 @@ if __name__ == "__main__":
         if o in ("-h", "--help"):
             print(usageText)
             sys.exit(1)
-        
-        for p in params:
-            if o in ("-{:.1}".format(p), "--{}".format(p)):
-                params[p] = a
+        elif o in ("-l", "--latest"): latest = True
+        elif o in ("-u", "--user"): user = a
+        elif o in ("-p", "--pass"): pwd = a
+        elif o in ("-m", "--module"): module = a
+        elif o in ("-t", "--till"): till = datetime.datetime.strptime(a, "%d/%m/%Y")
+        elif o in ("-s", "--since"): since = datetime.datetime.strptime(a, "%d/%m/%Y")
+        elif o in ("-w", "--workers"): workers = int(a)
 
-    # handle defaults
-    for p in ("from","till"):
-        params[p] = datetime.datetime.strptime(params[p], "%d/%m/%Y") if params[p] else None
-        
-    if not params["user"]: params["user"] = input("username: ")
-    if not params["pass"]: params["pass"] = getpass.getpass("password: ")
-
+    if not user: user = input("username: ")
+    if not pwd: pwd = getpass.getpass("password: ")
+    
     # get student uids
     students = args + sys.stdin.readlines()
     students = [ int(i) for i in students ]
 
     # get engagement data
-    session = covscraper.auth.Authenticator(params["user"], params["pass"])
+    process = Processor( (user, pwd), 
+                module=module, since=since, till=till, latest=latest )
 
-    import pickle
-    rawdata = {}
+    print("uid, ontime, late, attended, absent")
+    with mp.Pool( processes=workers ) as pool:
+        for student, attendance in pool.imap_unordered( process, students ):
 
-    print("uid, module, ontime, late, unknown")
-    for student in students:
-        try:
-            guages, slots = covscraper.engagementapi.get_student_engagement( session, student )
-        except ValueError: 
-            print( "{} does not exist on engagement system".format(student), file=sys.stderr)
-            continue
-        #with open("test","rb") as f:
-       #     pickle.dump((guages,slots),f)
-        #    guages, slots = pickle.load(f)      
+            if attendance == None:
+                print(student)
 
-        #if params["module"]: slots = [ s for s in slots if s["module"] == params["module"] ]
-        if params["from"]: slots = [ s for s in slots if s["start"] >= params["from"] ]
-        if params["till"]: slots = [ s for s in slots if s["start"] <= params["till"] ]
-
-        engagement, _ = covscraper.engagementapi.get_attendance( slots )
-        print("{student}, overall, {ontime}, {late}, {unknown}".format(student=student,
-                                                                        ontime=engagement.get("ontime",0),
-                                                                            late=engagement.get("late",0),
-                                                                            unknown=engagement.get("absent",0)+engagement.get("unverified",0)))
-
-        if params["raw"]:
-            rawdata[student] = slots
-
-        for module in set([ s["module"] for s in slots ]):
-            engagement, _ = covscraper.engagementapi.get_attendance( [ s for s in slots if s["module"] == module ] )
-            print("{student}, {module}, {ontime}, {late}, {unknown}".format(student=student,
-                                                                            module=module,
-                                                                            ontime=engagement.get("ontime",0),
-                                                                            late=engagement.get("late",0),
-                                                                            unknown=engagement.get("absent",0)+engagement.get("unverified",0)))
-
-        if params["raw"]:
-            with open( params["raw"], "wb" ) as f:
-                pickle.dump( rawdata, f )
-        
-       #print(student, engagement)
+            print( "{student}, {ontime}, {late}, {attended}, {absent}".format(student=student,
+                                                                              ontime=attendance["On Time"],
+                                                                              late=attendance.get("late",0),
+                                                                              attended=attendance["Attended"],
+                                                                              absent=attendance["Absent"]) )
+            sys.stdout.flush()
 
     sys.exit(0)
-
    
