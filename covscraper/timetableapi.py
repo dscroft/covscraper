@@ -23,7 +23,13 @@ def get_timetable( session, module="", room="", course="", uid="", lecturer="", 
 
     academicyear = academic_year(date)
 
-    url = url.format(module=auth.url_safe(module), room=auth.url_safe(room), course=auth.url_safe(course), lecturer=auth.url_safe(lecturer), uid=uid, stage=stage, academicyear=academicyear)
+    url = url.format(module=auth.url_safe(module), 
+        room=auth.url_safe(room), 
+        course=auth.url_safe(course), 
+        lecturer=auth.url_safe(lecturer), 
+        uid=uid, stage=stage, 
+        academicyear=academicyear)
+
     response = session.get(url)
 
     return _decode_timetables( response.text )
@@ -80,6 +86,7 @@ def _decode_timetables( html ):
     quoteReg = re.compile( r"(^\"[^\"]*\":\s*\".*)(\")(.*\"[,\r\n])", re.MULTILINE ) 
     dateReg = re.compile(r"new Date\((.*)\)", re.MULTILINE)
     propReg = re.compile(r"(\w*)(:)", re.MULTILINE)
+    damnCharReg = re.compile(r"&#[0-9]{1,};")
     
     slots = []
 
@@ -93,6 +100,9 @@ def _decode_timetables( html ):
         while quoteReg.search(match):
             match = quoteReg.sub(r"\1\3", match)
         
+        # ffs, tabs?        
+        match = match.replace( "\t", "" )
+
         j = json.loads(match)
 
         # decode dates

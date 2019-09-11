@@ -1,7 +1,7 @@
 import requests
 from requests_ntlm import HttpNtlmAuth
 from bs4 import BeautifulSoup
-import datetime, sys, re
+import datetime, sys, re, os
 import json
 import urllib
 
@@ -105,10 +105,13 @@ class Authenticator(requests.sessions.Session):
           
         
     def get(self, url, *args, **kwargs):
-        response = requests.sessions.Session.get(self, url, *args, **kwargs)
+        #print( url )
+        #certfile = os.path.join('/etc/ssl/certs/','ca-bundle.crt')
+
+        response = requests.sessions.Session.get(self, url, verify=False, *args, **kwargs)
 
         failCondition = lambda response: response.status_code in (401,403) or response.url in self.redirectPages
-             
+
         if failCondition(response):               # if the page failed or we got redirected to anything in redirectPages  
             self.__run_handler( response )
 

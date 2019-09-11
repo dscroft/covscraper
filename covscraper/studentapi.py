@@ -18,7 +18,7 @@ def get_student_details( session, uid ):
     return _decode_student( response.text )
 
 def get_attendance( engagement, latest=False ):
-    absolute = { "On Time": 0, "Absent": 0, "Optional": 0, "Wrong Location": 0, "Late": 0 }
+    absolute = { "Attended": 0, "On Time": 0, "Absent": 0, "Optional": 0, "Wrong Location": 0, "Late": 0 }
     percent = {"confirmed": 0, "possible": 0, "late": 0}
 
     if len(engagement["sessions"]) == 0:
@@ -51,7 +51,7 @@ def get_attendance( engagement, latest=False ):
     return absolute, percent
 
 def get_engagement( session, uid, attempts=5 ):
-  url = "https://webapp.coventry.ac.uk/Sonic/Student%20Records/AttendanceMonitoring/IndividualAttendance.aspx?studentid={uid}" 
+  url = "https://webapp.coventry.ac.uk/Sonic/Student%20Records/AttendanceMonitoring/IndividualReport.aspx?studentid={uid}" 
    
   for i in range(attempts):
     try:
@@ -59,13 +59,18 @@ def get_engagement( session, uid, attempts=5 ):
       return _decode_engagement( response.text )
     except ValueError:
       continue
+    except NoStudent:
+      print( "No student: " + str(uid) + url.format(uid=uid) )
+      print( response.text )
+    except requests.exceptions.ConnectionError:
+      continue
     
-  return None
+  return { "sessions": [], "semester": 0.0, "year": 0.0 }
 
 def _decode_engagement( html ):
   soup = BeautifulSoup( html, "lxml" )
-  
-  engagementTable = soup.find( "table", {"id":"ctl00_ctl00_BodyContentPlaceHolder_MainContentPlaceHolder_attendanceDetail_ctl00"} )
+
+  engagementTable = soup.find( "table", {"id":"ctl00_ctl00_BodyContentPlaceHolder_MainContentPlaceHolder_dgvIndividual_ctl00"} )
   if not engagementTable:
     raise NoStudent("Student does not exist")
 
@@ -77,7 +82,7 @@ def _decode_engagement( html ):
 
   try: result["year"] = float(yearAttendance.text.strip("%"))
   except ValueError: result["year"] = None
-    
+ 
   # get individual session data
   headers = ("date","start","end","module","room","session","status","type","info")
   sessions = []
@@ -157,10 +162,7 @@ def _decode_student( html ):
 if __name__ == "__main__":
     import getpass
 
-    session = auth.Authenticator("", "")
-    student = get_student_details( session,  )
-    
-    
-    print(student)
+    with open( "temp", "r" ) as f:
+      _decode_engagement( f.read() )
     
     sys.exit(0)

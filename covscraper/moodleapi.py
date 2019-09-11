@@ -26,7 +26,7 @@ def _decode_grades( csvstr ):
     marks = {}
     for row in rawdata:
         if row[uidpos]=='': continue
-        uid = int(row[uidpos])
+        uid = row[uidpos]
         details = { headers[k]:v for k, v in zip(header,row) if headers.get(k,None) }
         details["grades"] = [ (k,None if v=='-' else float(v)) for k, v in zip(header,row) if k not in headers ]
         marks[uid] = details
