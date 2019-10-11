@@ -47,7 +47,10 @@ def get_attendance( engagement, latest=False ):
     percent["On Time"]  = absolute["On Time"] 
     #percent["possible"]  = absolute["On Time"] + absolute["Late"] + absolute["future"]
 
-    percent = { k: v/total*100 for k, v in percent.items() }
+    try:
+      percent = { k: v/total*100 for k, v in percent.items() }
+    except ZeroDivisionError:
+      percent = { k: 0 for k in percent }
         
     return absolute, percent
 

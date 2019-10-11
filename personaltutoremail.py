@@ -66,11 +66,11 @@ class Outlooker:
 from openpyxl import Workbook, load_workbook
 import re
 
-def generate_email_body( students ):
+def generate_email_body( students, start, end ):
     jtemplate = jinja2.Environment(loader=jinja2.BaseLoader).from_string(TEMPLATE)
 
     dateFmt = "%H:%M %d/%m/%Y"
-    msgBody = "<h3>Attendance period {} to {}</h3>".format(since.strftime(dateFmt),now.strftime(dateFmt))
+    msgBody = "<h3>Attendance period {} to {}</h3>".format(start.strftime(dateFmt),end.strftime(dateFmt))
     for s in students:
         logger.info( "Process {}".format(s) )
         try:
@@ -80,6 +80,7 @@ def generate_email_body( students ):
 
         try:      
             engagement = covscraper.studentapi.get_engagement( session, s )
+            engagement["sessions"] = [ i for i in engagement["sessions"] if i["start"] >= start and i["end"] <= end ]
             absolute, percent = covscraper.studentapi.get_attendance( engagement )
         except covscraper.studentapi.NoStudent:
             absolute, percent = None, None
@@ -138,7 +139,7 @@ if __name__ == "__main__":
 
     # get student uids
     if to != None:
-        outlook.send( to, generate_email_body( *( int(i) for i in args ) ) )
+        outlook.send( to, generate_email_body( ( int(i) for i in args ), since, now ) )
 
 
     if file:
@@ -158,6 +159,6 @@ if __name__ == "__main__":
 
             sids = [ i.value for i in row[1:] if i.value != None ]
 
-            outlook.send( staffid+"@coventry.ac.uk", generate_email_body(sids) )
+            outlook.send( staffid+"@coventry.ac.uk", generate_email_body(sids, since, now) )
 
     sys.exit(0)
