@@ -35,7 +35,6 @@ def _decode_grades( csvstr ):
 
 def student_ids( session, module ):
     return list(get_grades( session, module ).keys())
-    
   
 def get_grades( session, module ):
     """get the sessions timetabled for the person used to authenticate the current session"""
@@ -45,8 +44,6 @@ def get_grades( session, module ):
 
     keyRegex = re.compile( r"\"sesskey\":\"([^\"]*)\"" )
     sesskey = keyRegex.search( response.text ).group(1)
-
-    #print( response.text )
 
     soup = BeautifulSoup( response.text, "lxml" )
     items = [ int(e["data-itemid"]) for e in soup.findAll("th") if e.has_attr("data-itemid") ]

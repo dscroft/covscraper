@@ -3,6 +3,7 @@ import covscraper
 import datetime
 import sys, json
 import multiprocessing as mp
+import logging
 
 class Processor:
   def __init__(self, credentials, module=None, since=None, till=None, latest=None):
@@ -23,9 +24,12 @@ class Processor:
   def __call__(self, uid):
     engagement = covscraper.studentapi.get_engagement( self.get_session(), uid )
     
-    if self.module: engagement["sessions"] = [ s for s in engagement["sessions"] if s["module"] == self.module ]
-    if self.since: engagement["sessions"] = [ s for s in engagement["sessions"] if s["start"] >= self.since ]
-    if self.till: engagement["sessions"] = [ s for s in engagement["sessions"] if s["start"] <= self.till ]
+    try:
+        if self.module: engagement["sessions"] = [ s for s in engagement["sessions"] if s["module"] == self.module ]
+        if self.since: engagement["sessions"] = [ s for s in engagement["sessions"] if s["start"] >= self.since ]
+        if self.till: engagement["sessions"] = [ s for s in engagement["sessions"] if s["start"] <= self.till ]
+    except :
+        return uid, ["ERROR", engagement]
 
     attendance, _ = covscraper.studentapi.get_attendance( engagement, self.latest )
 
@@ -79,7 +83,6 @@ if __name__ == "__main__":
     print("uid, ontime, late, attended, absent")
     with mp.Pool( processes=workers ) as pool:
         for student, attendance in pool.imap_unordered( process, students ):
-
             if attendance == None:
                 print(student)
 

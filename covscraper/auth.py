@@ -4,6 +4,8 @@ from bs4 import BeautifulSoup
 import datetime, sys, re, os
 import json
 import urllib
+from requests.packages.urllib3.exceptions import InsecureRequestWarning
+requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
 class AuthenticationFailure(Exception):
 	def __init__(self, message):

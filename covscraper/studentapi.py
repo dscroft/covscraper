@@ -19,7 +19,7 @@ def get_student_details( session, uid ):
 
 def get_attendance( engagement, latest=False ):
     absolute = { "Attended": 0, "On Time": 0, "Absent": 0, "Optional": 0, "Wrong Location": 0, "Late": 0 }
-    percent = {"confirmed": 0, "possible": 0, "late": 0}
+    percent = {"Attended": 0, "On Time": 0}
 
     if len(engagement["sessions"]) == 0:
       return absolute, percent
@@ -38,15 +38,16 @@ def get_attendance( engagement, latest=False ):
         if s["status"] in absolute:
           absolute[s["status"]] += 1
 
+    total = sum([ v for k, v in absolute.items() if k != "future"])
+    total -= absolute["Optional"]
+
     absolute["Attended"] = absolute["On Time"] + absolute["Late"]
 
-    total = sum([ v for k, v in absolute.items() if k != "future"])
-
-    #percent["confirmed"] = absolute["On Time"]
-    #percent["late"]      = absolute["On Time"] + absolute["Late"]
+    percent["Attended"] = absolute["On Time"] + absolute["Late"]
+    percent["On Time"]  = absolute["On Time"] 
     #percent["possible"]  = absolute["On Time"] + absolute["Late"] + absolute["future"]
 
-    #percent = { k: v/total*100 for k, v in percent.items() }
+    percent = { k: v/total*100 for k, v in percent.items() }
         
     return absolute, percent
 
@@ -59,11 +60,11 @@ def get_engagement( session, uid, attempts=5 ):
       return _decode_engagement( response.text )
     except ValueError:
       continue
-    except NoStudent:
-      print( "No student: " + str(uid) + url.format(uid=uid) )
-      print( response.text )
-    except requests.exceptions.ConnectionError:
-      continue
+    #except NoStudent:
+    #  raise NoStudent( "No student: " + str(uid) + url.format(uid=uid) )
+#     print( response.text )
+    #except requests.exceptions.ConnectionError:
+    #  continue
     
   return { "sessions": [], "semester": 0.0, "year": 0.0 }
 
@@ -120,16 +121,19 @@ def _decode_student( html ):
         "phone": soup.find("span", {"id":"ctl00_BodyContentPlaceHolder_txtCorrTelNo"}),
         "email": soup.find("a", {"id":"ctl00_BodyContentPlaceHolder_mtEmail"}),
         "modules": [],
-        "courses": []
+        "courses": [],
+        "id": soup.find("span", {"id":"ctl00_BodyContentPlaceHolder_txtStudID"})
     }
     
     # === extract text from html tags ===
-    for key in ("firstName", "lastName", "dob", "gender", "phone", "email"):
+    for key in ("firstName", "lastName", "dob", "gender", "phone", "email", "id"):
         student[key] = student[key].text
     
     #print( student["image"]["src"] )
     #print( student["image"]["src"][:-10] )
-    
+
+    student["url"] = "https://webapp.coventry.ac.uk/Sonic/Student%20Records/StudentView.aspx?studid="+student["id"]
+    student["engageurl"] = "https://webapp.coventry.ac.uk/Sonic/Student%20Records/AttendanceMonitoring/IndividualReport.aspx?studentid="+student["id"]
     student["dob"] = datetime.datetime.strptime(student["dob"], "%d %B %Y").date()
     student["image"] = "https://webapp.coventry.ac.uk/sonic/student%20records/"+student["image"]["src"][:-10]
     
@@ -143,12 +147,13 @@ def _decode_student( html ):
         
         student["courses"].append(course)
     
-    
     # === handle the modules list ===
     modules = soup.find("table", {"id":"ctl00_BodyContentPlaceHolder_grdModules_ctl00"})
     for row in modules.find("tbody").find_all("tr"):
         module = [ col.text for col in row.find_all("td") ]
         
+        if len(module) != 8: continue
+
         if module[5] == "\xa0": module[5] = None
         
         for i in (6,7): 
