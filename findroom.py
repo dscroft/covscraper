@@ -7,7 +7,7 @@ import ast
 if __name__ == "__main__":
     usageTxt = "help"
     
-    params = {"user": None, "pass": None, "room": "", "equip": "", "course": "", "uid": "", "date": None, "for": 1.0, "verbose":"False"}
+    params = {"user": None, "pass": None, "room": "", "equip": "", "course": "", "uid": "", "date": None, "for": 1.0, "verbose":"True"}
     week = covscraper.timetableapi.cov_week(datetime.datetime.now())
     
     # configure flags
