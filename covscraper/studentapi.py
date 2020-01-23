@@ -146,7 +146,7 @@ def _decode_student( html ):
         course = [ col.text for col in row.find_all("td") ]
 
         for i in (6,7):
-             course[i] = datetime.datetime.strptime(course[i], "%d/%M/%Y").date()
+             course[i] = datetime.datetime.strptime(course[i], "%d/%m/%Y").date()
         
         student["courses"].append(course)
     
@@ -160,7 +160,7 @@ def _decode_student( html ):
         if module[5] == "\xa0": module[5] = None
         
         for i in (6,7): 
-            module[i] = datetime.datetime.strptime(module[i], "%d/%M/%Y").date()
+            module[i] = datetime.datetime.strptime(module[i], "%d/%m/%Y").date()
         
         student["modules"].append(module) 
         
