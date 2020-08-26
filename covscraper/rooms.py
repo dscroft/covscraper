@@ -57,5 +57,3 @@ ROOMS = {
 "EC4-32": {"desc":"Meeting Room - 18 - No students AV but bring your own laptop", "size":18, "equip":("meeting",)},
 "EC4-11": {"desc":"Private Space (EC Use Only - Dean' Office)", "size":None, "equip":("meeting",)},
 "EC4-38": {"desc":"Private Space (EC Use Only) 8 -No students No AV/PC", "size":8, "equip":("meeting",)}
-
-}
