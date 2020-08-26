@@ -1,16 +1,16 @@
 ROOMS = {
-"ASG31":   {"desc":"", "size":100, "equip":("pc",)},
-"MFG15/16":{"desc":"", "size":8*6-1, "equip":("pc",)},
-"WM308":   {"desc":"", "size":5*6, "equip":("pc",)},
+    "ASG31":   {"desc":"", "size":100, "equip":("pc",)},
+    "MFG15/16":{"desc":"", "size":8*6-1, "equip":("pc",)},
+    "WM308":   {"desc":"", "size":5*6, "equip":("pc",)},
+    
 
-
-"ECM-01A": {"desc":"mathlab", "size":None},
-"ECM-01B": {"desc":"",        "size":None},
-"ECM-15":  {"desc":"",        "size":None},
-"ECM-15A": {"desc":"maclab",  "size":None, "equip":("mac",)},
-"ECM-18":  {"desc":"",        "size":6*6, "equip":("pc",)},
-
-"ECG-01":  {"desc":"",        "size":None},
+    "ECM-01A": {"desc":"mathlab", "size":None},
+    "ECM-01B": {"desc":"",        "size":None},
+    "ECM-15":  {"desc":"",        "size":None},
+    "ECM-15A": {"desc":"maclab",  "size":None, "equip":("mac",)},
+    "ECM-18":  {"desc":"",        "size":6*6, "equip":("pc",)},
+    
+    "ECG-01":  {"desc":"",        "size":None},
 "ECG-02":  {"desc":"",        "size":None},
 "ECG-03":  {"desc":"",        "size":5*6, "equip":("pc",)},
 "ECG-04":  {"desc":"",        "size":4*6, "equip":("pc",)},
@@ -59,4 +59,8 @@ ROOMS = {
 "EC3-42": {"desc":"Private Space (EC Use Only) 8 - No students No AV/PC", "size":8, "equip":("meeting",)},
 "EC4-32": {"desc":"Meeting Room - 18 - No students AV but bring your own laptop", "size":18, "equip":("meeting",)},
 "EC4-11": {"desc":"Private Space (EC Use Only - Dean' Office)", "size":None, "equip":("meeting",)},
-"EC4-38": {"desc":"Private Space (EC Use Only) 8 -No students No AV/PC", "size":8, "equip":("meeting",)}
+    "EC4-38": {"desc":"Private Space (EC Use Only) 8 -No students No AV/PC", "size":8, "equip":("meeting",)}
+
+    }
+
+    
