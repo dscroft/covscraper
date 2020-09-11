@@ -33,10 +33,11 @@ if __name__ == "__main__":
     # handle defaults
     if not params["user"]: params["user"] = input("username: ")
     if not params["pass"]: params["pass"] = getpass.getpass("password: ")
-    params["equip"] = set(params["equip"].split(","))
+    params["equip"] = set([ i for i in params["equip"].split(",") if i != ""])
     params["for"] = float(params["for"])
 
     params["date"] = datetime.datetime.strptime(params["date"], "%d/%m/%Y %H:%M") if params["date"] else datetime.datetime.now()
+    #params["date"] = datetime.datetime.strptime(params["date"], "%d/%m/%Y") if params["date"] else datetime.datetime.now()
     params["till"] = params["date"] + datetime.timedelta(hours=params["for"])
               
     currentweek = covscraper.timetableapi.cov_week(params["date"])
@@ -45,13 +46,17 @@ if __name__ == "__main__":
     session = covscraper.auth.Authenticator(params["user"], params["pass"])
 
     for room, data in covscraper.rooms.ROOMS.items():
+        if len(params["equip"]) != 0 and not( params["equip"] <= set(data.get("equip",[])) ):
+            print( "skip" )
+            continue
+
         slots = covscraper.timetableapi.get_timetable( session, room=room)
         slots = [ s for s in slots if (s["start"] <= params["date"] and params["date"] < s["end"]) \
-                                   or (s["start"] <= params["till"] and params["till"] < s["end"]) ]
+                                  or (s["start"] <= params["till"] and params["till"] < s["end"]) ]
 
         free = slots == []
-        if free or "free" not in params:
-            print("{} - {} - {}".format(room,("Busy","Free")[free],data["desc"]))
+        if free:
+            print("{} - {} - {}".format(room,data["desc"],data.get("equip",None)))
+        #print(("Busy","Free")[free])
 
     sys.exit(0)
-    

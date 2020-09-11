@@ -17,6 +17,23 @@ def get_student_details( session, uid ):
       
     return _decode_student( response.text )
 
+def get_student_id( session, username ):
+  url = f"https://webapp.coventry.ac.uk/Timetable-main/Lookup?type=student&query={username}"
+
+  response = session.get( url )
+  potentialIds = ( i["Item2"] for i in json.loads( response.text ) )
+  
+  for sid in potentialIds:
+    try:
+      details = get_student_details( session, sid )
+
+      if details["email"].lower().split("@")[0] == username.lower():
+       return details["id"]
+    except NoStudent:
+      pass
+      
+  return None
+
 def get_attendance( engagement, latest=False ):
     absolute = { "Attended": 0, "On Time": 0, "Absent": 0, "Optional": 0, "Wrong Location": 0, "Late": 0 }
     percent = {"Attended": 0, "On Time": 0}
@@ -137,7 +154,10 @@ def _decode_student( html ):
 
     student["url"] = "https://webapp.coventry.ac.uk/Sonic/Student%20Records/StudentView.aspx?studid="+student["id"]
     student["engageurl"] = "https://webapp.coventry.ac.uk/Sonic/Student%20Records/AttendanceMonitoring/IndividualReport.aspx?studentid="+student["id"]
-    student["dob"] = datetime.datetime.strptime(student["dob"], "%d %B %Y").date()
+    try:
+      student["dob"] = datetime.datetime.strptime(student["dob"], "%d %B %Y").date()
+    except ValueError:
+      student["dob"] = None
     student["image"] = "https://webapp.coventry.ac.uk/sonic/student%20records/"+student["image"]["src"][:-10]
     
     # === handle the course list ===
@@ -160,7 +180,10 @@ def _decode_student( html ):
         if module[5] == "\xa0": module[5] = None
         
         for i in (6,7): 
-            module[i] = datetime.datetime.strptime(module[i], "%d/%m/%Y").date()
+            try:
+              module[i] = datetime.datetime.strptime(module[i], "%d/%m/%Y").date()
+            except ValueError:
+              module[i] = None
         
         student["modules"].append(module) 
         
