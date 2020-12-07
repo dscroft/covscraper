@@ -7,9 +7,9 @@ import urllib
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
-class AuthenticationFailure(Exception):
-	def __init__(self, message):
-		self.message = message
+class AuthenticationFailure(Exception):      
+    def __init__(self, message):
+        self.message = message
 
 class Authenticator(requests.sessions.Session):
     def __auth_sonic(self, url):
@@ -22,31 +22,38 @@ class Authenticator(requests.sessions.Session):
         #return response
 
     def __auth_kuali(self, url):
+        #print(f"__auth_kuali for: {url}")
+        #print("Authing Kuali")
         kualiUrl = "https://coventry.kuali.co/auth?return_to=https%3A%2F%2Fcoventry.kuali.co%2Fapps%2F"
         shibbolethUrl = "https://idp2.coventry.ac.uk/idp/Authn/UserPassword"
         
         # shibboleth wont let us connect unless it looks like we've been redirected from an approved site
         response = requests.sessions.Session.get(self, kualiUrl)
-        if response.status_code != 200:
-          raise AuthenticationFailure("Failed to load Kuali, HTTP {}".format(response.status_code))
-
+        if response.status_code != 200:                
+            raise AuthenticationFailure("Failed to load Kuali, HTTP {}".format(response.status_code))
+      
+    
         # post the auth data to shibboleth
         data = {"j_username": self.username, "j_password": self.password}
         response = requests.sessions.Session.post(self, shibbolethUrl, data=data)
         if response.status_code != 200:
-          raise AuthenticationFailure("Failed to load shibboleth, HTTP {}".format(response.status_code))
+            raise AuthenticationFailure("Failed to load shibboleth, HTTP {}".format(response.status_code))
 
         # extract the auth key and post it
         soup = BeautifulSoup( response.text, "lxml" )
         samlUrl = soup.find( "form", {"method": "post"} )["action"]
         key = soup.find( "input", {"name": "SAMLResponse"} )["value"]
+        #print(f"samlUrl: {samlUrl}\nkey: {key}")
         response = requests.sessions.Session.post(self, samlUrl, data={"SAMLResponse": key})
+        #print(f"samlUrl response: {response.text}")
         if response.status_code != 200:
-          raise AuthenticationFailure("Failed to post auth code, HTTP {}".format(response.status_code))
-        
+            raise AuthenticationFailure("Failed to post auth code, HTTP {}".format(response.status_code))
+
         # get the actual page that we were after all this time
-        #response = requests.sessions.Session.get(self, url)
-        
+        #print(f"Now getting {url}")
+        response = requests.sessions.Session.get(self, url)
+        #print(f"Actual response: {response.text}")
+        #print(response.text)
         #return response
     
     def __auth_engage(self, url):
@@ -98,11 +105,12 @@ class Authenticator(requests.sessions.Session):
 
     def __run_handler(self, response):
       domain = self.domainRegex.search(response.url)
+      #print(f"Got domain: {domain}")
       if domain:
         domain = domain.group(1)
         try:
           func = self.authHandler[domain]
-          func(self,None)
+          func(self,response.url)
         except KeyError: pass
           
         
@@ -112,16 +120,16 @@ class Authenticator(requests.sessions.Session):
 
         response = requests.sessions.Session.get(self, url, verify=False, *args, **kwargs)
 
-        failCondition = lambda response: response.status_code in (401,403) or response.url in self.redirectPages
-
+        failCondition = lambda response: response.status_code in (401,403,500) or response.url in self.redirectPages
+        print(f"response text: {response.text}\ncode: {response.status_code}")
         if failCondition(response):               # if the page failed or we got redirected to anything in redirectPages  
             self.__run_handler( response )
-
             response = requests.sessions.Session.get(self, url, *args, **kwargs)
 
         if failCondition(response):               # if it still didn't work give up
             raise AuthenticationFailure("Could not authenticate")
-
+        #print("auth.get: ",end="")
+        #print(response.text)
         return response
 
     def post(self,url, *args, **kwargs):

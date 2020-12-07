@@ -33,8 +33,8 @@ if __name__ == "__main__":
         
     # authenticate and get the timetable
     session = covscraper.auth.Authenticator(params["user"], params["pass"])
-    
-    mid = covscraper.kualiapi.get_module_mid( session, "122COM" )
-    print(mid)
+    print(covscraper.kualiapi.get_module_mid(session,"4061CEM"))
+    # mid = covscraper.kualiapi.get_module_mid( session, "122COM" )
+    # print(mid)
 
     sys.exit(0)
