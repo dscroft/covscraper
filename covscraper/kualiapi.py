@@ -31,13 +31,13 @@ def get_uid( session, module ):
 
 def _decode_mid( data ):
     # TODO
-    return data
+    return json.loads(data)
   
 def get_module_mid( session, module ):
     url = "https://coventry.kuali.co/api/cm/courses/changes/{uid}?denormalize=true"
   
     uid = get_uid( session, module )
-    print(f"Got UID: {uid}")
+    #print(f"Got UID: {uid}")
     response = session.get( url.format(uid=uid) )
 
     return _decode_mid( response.text )

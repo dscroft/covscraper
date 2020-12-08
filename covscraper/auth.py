@@ -121,7 +121,7 @@ class Authenticator(requests.sessions.Session):
         response = requests.sessions.Session.get(self, url, verify=False, *args, **kwargs)
 
         failCondition = lambda response: response.status_code in (401,403,500) or response.url in self.redirectPages
-        print(f"response text: {response.text}\ncode: {response.status_code}")
+        #print(f"response text: {response.text}\ncode: {response.status_code}")
         if failCondition(response):               # if the page failed or we got redirected to anything in redirectPages  
             self.__run_handler( response )
             response = requests.sessions.Session.get(self, url, *args, **kwargs)
