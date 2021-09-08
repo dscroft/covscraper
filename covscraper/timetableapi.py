@@ -9,7 +9,8 @@ WEEKOFFSET = { "2016-2017": datetime.date(2016,7,17), \
                "2017-2018": datetime.date(2017,7,16), \
                "2018-2019": datetime.date(2018,7,15), \
                "2019-2020": datetime.date(2019,7,14), \
-               "CU20_21": datetime.date(2020,7,5) }
+               "CU20_21": datetime.date(2020,7,5),
+               "CU21_22": datetime.date(2021,7,4) }
 
 def get_lecturer_timetable( session, date=datetime.datetime.now() ):
     """get the sessions timetabled for the person used to authenticate the current session"""
@@ -44,12 +45,14 @@ def get_register( session, slot ):
     if "dummyUrl" in slot:
         url = "https://webapp.coventry.ac.uk" + slot["dummyUrl"]
     else:
+        #https://webapp.coventry.ac.uk/Timetable-main/Attendance?SetId=CU21_22&SlotId=315883&WeekNumber=1
+
         url = "https://webapp.coventry.ac.uk/Timetable-main/Attendance?SetId={academicyear}&SlotId={eventid}&WeekNumber={week}"
         url = url.format(academicyear=academic_year(slot["start"]), \
                          eventid=slot["ourEventId"], \
                          week=cov_week(slot["start"]) )
     
-    print( url )
+    #print( url )
 
     response = session.get(url)
     slot["register"] = _decode_register(response.text)
