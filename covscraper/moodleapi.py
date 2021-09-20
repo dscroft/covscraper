@@ -61,3 +61,61 @@ def get_grades( session, module ):
 
     return _decode_grades( response.text )
 
+def get_question_bank( session, module ):
+    # get the initial bank export page so we can get the category id and session keys
+    url = f"https://cumoodle.coventry.ac.uk/question/edit.php?courseid={module}"
+    response = session.get( url )
+
+    soup = BeautifulSoup( response.text, "lxml" )
+
+    # get the session key
+    keyRegex = re.compile( r"\"sesskey\":\"([^\"]*)\"" )
+    sesskey = keyRegex.search( response.text ).group(1)
+
+    # get the category id
+    categories = soup.find( id="id_selectacategory" )
+    if categories == None: return None
+    category = next( ( c["value"] \
+                       for c in categories.findAll( "option" ) \
+                       if c.text.startswith("Top for") ) )
+
+    # send the post request to generate the moodle xml document
+    url = f"https://cumoodle.coventry.ac.uk/question/export.php"
+    data = {
+        "courseid": module,
+        "sesskey": sesskey,
+        "_qf__question_export_form": 1,
+        "mform_isexpanded_id_fileformat": 1,
+        "mform_isexpanded_id_general": 1,
+        "format": "xml",
+        "category": category,
+        "cattofile": 1,
+        "contexttofile": 1,
+        "submitbutton": "Export+questions+to+file" }
+    response = session.post( url, data=data )
+
+    soup = BeautifulSoup( response.text, "lxml" )
+    download = soup.find( "div", {"class": ["box","generalbox"]} ).find( "a", text="click here" )
+    downloadUrl = download["href"]
+
+    # some of these are big files
+    response = session.get( downloadUrl, stream=True )
+    result = b''
+    for chunk in response.iter_content( chunk_size=1024 ):
+        result += chunk
+
+    if response.status_code == 404: return None
+
+    return result.decode()
+    
+def get_module_name( session, module ):
+    if module in (0,1): return None
+
+    url = f"https://cumoodle.coventry.ac.uk/course/view.php?id={module}"
+
+    response = session.get( url )
+    if response.status_code != 200: return None
+
+    soup = BeautifulSoup( response.text, "lxml" )
+    title = soup.find( "title" )
+    return title.text

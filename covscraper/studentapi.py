@@ -18,20 +18,25 @@ def get_student_details( session, uid ):
     return _decode_student( response.text )
 
 def get_student_id( session, username ):
-  url = f"https://webapp.coventry.ac.uk/Timetable-main/Lookup?type=student&query={username}"
+  sids = set()
 
-  response = session.get( url )
-  potentialIds = ( i["Item2"] for i in json.loads( response.text ) )
-  
-  for sid in potentialIds:
-    try:
-      details = get_student_details( session, sid )
+  for i in range(len(username),0,-1):
+    url = f"https://webapp.coventry.ac.uk/Timetable-main/Lookup?type=student&query={username[:i]}"
+    response = session.get( url )
 
-      if details["email"].lower().split("@")[0] == username.lower():
-       return details["id"]
-    except NoStudent:
-      pass
-      
+    for s in ( i["Item2"] for i in json.loads( response.text ) ):
+      if s in sids: continue
+
+      sids.add(s)
+
+      try:
+        details = get_student_details( session, s )
+
+        if details["email"].lower().split("@")[0] == username.lower():
+          return s
+      except NoStudent:
+        pass
+
   return None
 
 def get_attendance( engagement, latest=False ):

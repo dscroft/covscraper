@@ -48,6 +48,10 @@ class Authenticator(requests.sessions.Session):
         #response = requests.sessions.Session.get(self, url)
         
         #return response
+
+    def __auth_aula(self, url):
+        loginUrl = "https://api.coventry.aula.education/sso/login?redirect=https://coventry.aula.education/&email=ac0745@coventry.ac.uk"
+        
     
     def __auth_engage(self, url):
         loginUrl = "https://engagementdashboard.coventry.ac.uk/login"
