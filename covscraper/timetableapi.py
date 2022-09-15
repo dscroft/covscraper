@@ -9,7 +9,9 @@ WEEKOFFSET = { "2016-2017": datetime.date(2016,7,17), \
                "2017-2018": datetime.date(2017,7,16), \
                "2018-2019": datetime.date(2018,7,15), \
                "2019-2020": datetime.date(2019,7,14), \
-               "CU20_21": datetime.date(2020,7,5) }
+               "CU20_21": datetime.date(2020,7,5), \
+               "CU21_22": datetime.date(2021,7,4), \
+               "CU22_23": datetime.date(2022,7,3) }
 
 def get_lecturer_timetable( session, date=datetime.datetime.now() ):
     """get the sessions timetabled for the person used to authenticate the current session"""
