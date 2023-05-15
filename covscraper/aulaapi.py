@@ -10,11 +10,17 @@ def email_to_id(session: Session, student_email: str):
     student_email = student_email.replace("@uni.", "@")
 
     # Grab internal aula id for student first
-    aula_id = session.get(
-        "https://apiv2.coventry.aula.education/search/v2/users/{}?size=1".format(
+    response = session.get(
+        "https://apiv2.coventry.aula.education/search/v2/users/{}".format(
             student_email
         ),
-    ).json()["users"][0]["id"]
+    )
+
+    aula_id = None
+    for i in response.json()["users"]:
+        if i["email"] == student_email:
+            aula_id = i["id"]
+            break
 
     # Grab student object and extract corresponding student ID
     data = {"userIds": [aula_id]}
