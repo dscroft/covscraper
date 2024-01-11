@@ -22,16 +22,20 @@ class Processor:
     return self.sessions[pid]
 
   def __call__(self, uid):
-    engagement = covscraper.studentapi.get_engagement( self.get_session(), uid )
-    
     try:
-        if self.module: engagement["sessions"] = [ s for s in engagement["sessions"] if s["module"] == self.module ]
-        if self.since: engagement["sessions"] = [ s for s in engagement["sessions"] if s["start"] >= self.since ]
-        if self.till: engagement["sessions"] = [ s for s in engagement["sessions"] if s["start"] <= self.till ]
-    except :
-        return uid, ["ERROR", engagement]
+        engagement = covscraper.studentapi.get_engagement( self.get_session(), uid )
+        
+        try:
+            if self.module: engagement["sessions"] = [ s for s in engagement["sessions"] if s["module"] == self.module ]
+            if self.since: engagement["sessions"] = [ s for s in engagement["sessions"] if s["start"] >= self.since ]
+            if self.till: engagement["sessions"] = [ s for s in engagement["sessions"] if s["start"] <= self.till ]
+        except :
+            return uid, ["ERROR", engagement]
 
-    attendance, _ = covscraper.studentapi.get_attendance( engagement, self.latest )
+        attendance, _ = covscraper.studentapi.get_attendance( engagement, self.latest )
+
+    except covscraper.studentapi.NoStudent:
+        attendance = None
 
     return uid, attendance
 
@@ -85,8 +89,8 @@ if __name__ == "__main__":
         for student, attendance in pool.imap_unordered( process, students ):
             if attendance == None:
                 print(student)
-
-            print( "{student}, {ontime}, {late}, {attended}, {absent}".format(student=student,
+            else:
+                print( "{student}, {ontime}, {late}, {attended}, {absent}".format(student=student,
                                                                               ontime=attendance["On Time"],
                                                                               late=attendance.get("late",0),
                                                                               attended=attendance["Attended"],

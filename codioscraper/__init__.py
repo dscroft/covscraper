@@ -137,7 +137,8 @@ class Codio:
 
   def get_students( self, orgCode ):
     url = "https://codio.co.uk/service"
-    data = {"object":"OrganizationManager","method":"removeMembers","data":{"orgId":orgCode,"memberIds":[12345]}}
+    #data = {"object":"OrganizationManager","method":"removeMembers","data":{"orgId":orgCode,"memberIds":[12345]}}
+    data = {"object":"OrganizationManager","method":"getMembers","data":{"orgId":orgCode,"teamName":"all-members"}}
     headers = {"Content-Type":"application/json"}
 
     response = self.__session.post( url, data=json.dumps(data), headers=headers )
@@ -231,6 +232,8 @@ class Codio:
   def _remove_student(self, studentId, orgId, forReal=False):
     if not forReal: return False
 
+    if studentId.startswith( "s-test-" ): return False # dont remove test accounts
+
     # removes dummy students
     #url = "https://codio.co.uk/service/"
     #data = {"object":"OrganizationManager","method":"removeDummyAccount","data":{"orgId":orgId, "dummyId":studentId}}
@@ -265,67 +268,3 @@ if __name__ == "__main__":
   sys.exit()
 
   
-
-  today = datetime.datetime.now()
-
-  classCode = "5d6d1810a5d5d4418793b91e"
-
-  print( codio.get_class_details()[0] )
-
-
-  sys.exit()
-
-
-  accounts = codio.get_accounts( organisation )
-  print(len(accounts))
-  sys.exit()
-  for count, _ in enumerate(accounts.items()):
-  	key, data = _
-  	#if count > 3: break
-
-  	projects = codio.get_projects( data["username"] )
-
-  	try:
-  		latest = max([ datetime.datetime.utcfromtimestamp(int(i["accessTime"])/1000) for i in projects ])
-  		diff = (today - latest).total_seconds() // 3600
-  	except ValueError:
-  		latest = None
-  		diff = None
-
-  	if latest == None or (today - latest) > datetime.timedelta(days=28):
-  	 	print( "{}|{}|{}".format(data["username"],latest,diff))
-  	
-  
-
-
-  sys.exit()
-
-
-  codio = Codio(sys.argv[1], sys.argv[2])
-  
-
-  organisation = list(codio.get_organisation_details().keys())[0]
-  print( organisation )
-
-  accounts = codio.get_accounts( organisation )
-
-  for count, account in enumerate(accounts):
-  	if count > 2: break
-  	
-  	print( count, accounts[account] )
-
-  	print( codio.get_projects( accounts[account]["username"] ) )
-
-  	print()
-
-
-
-  #classes, units, students, teachers = codio.get_class_details()
-  #for key, val in students.items():
-  #  if "aaa" in val["name"]:
-  #    print( key, val )
-
-
-
-
-#

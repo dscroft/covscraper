@@ -1,3 +1,5 @@
+# found free rooms
+
 import getpass, getopt
 import covscraper
 import datetime
@@ -47,7 +49,6 @@ if __name__ == "__main__":
     session = covscraper.auth.Authenticator(params["user"], params["pass"])
 
     for room, data in covscraper.rooms.ROOMS.items():
-
         if len(params["equip"])!=0 and not (params["equip"] <= set(data.get("equip",[]))):
             if params["verbose"]:
                 print(room,"does not have appropriate equipment")

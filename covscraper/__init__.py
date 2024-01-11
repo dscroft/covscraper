@@ -4,3 +4,4 @@ from covscraper import studentapi
 from covscraper import rooms
 from covscraper import kualiapi
 from covscraper import moodleapi
+from covscraper import aulaapi
