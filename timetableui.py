@@ -1,3 +1,8 @@
+# Get timetable data off the website.
+# users the timetableapi module
+# Importantly it gives you the number of students enrolled in a class
+# and who those students are, which the website fails to do
+
 import getpass, getopt
 import covscraper
 import datetime
@@ -43,6 +48,8 @@ if __name__ == "__main__":
     # authenticate and get the timetable
     session = covscraper.auth.Authenticator(params["user"], params["pass"])
     slots = covscraper.timetableapi.get_timetable( session, module=params["module"], room=params["room"], course=params["course"], uid=params["uid"], stage=params["stage"], date=params["date"] )
+
+    print( "currentweek", currentweek )
     
     slots = [ covscraper.timetableapi.get_register(session,s) for s in slots if covscraper.timetableapi.cov_week(s) == currentweek ]
     

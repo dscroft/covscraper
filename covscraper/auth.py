@@ -109,10 +109,10 @@ class Authenticator(Session):
     def __auth_aula(self, _):
         # It should be possible to have the system just login once and then cache the aula token to disk since it literally never expires.
         login_url = "https://api.coventry.aula.education/sso/login?redirect=https://coventry.aula.education/&email={}"
-        if not self.username.endswith("coventry.ac.uk"):
-            email = self.username + "@coventry.ac.uk"
-        elif self.username.endswith("uni.coventry.ac.uk"):
+        if self.username.endswith("uni.coventry.ac.uk"):
             email = self.username.replace("@uni.", "@")
+        elif not self.username.endswith("coventry.ac.uk"):
+            email = self.username + "@coventry.ac.uk"
         else:
             email = self.username
 

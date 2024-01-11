@@ -61,7 +61,27 @@ ROOMS = {
 "EC3-42": {"desc":"Private Space (EC Use Only) 8 - No students No AV/PC", "size":8, "equip":("meeting",)},
 "EC4-32": {"desc":"Meeting Room - 18 - No students AV but bring your own laptop", "size":18, "equip":("meeting",)},
 "EC4-11": {"desc":"Private Space (EC Use Only - Dean' Office)", "size":None, "equip":("meeting",)},
-    "EC4-38": {"desc":"Private Space (EC Use Only) 8 -No students No AV/PC", "size":8, "equip":("meeting",)}
+    "EC4-38": {"desc":"Private Space (EC Use Only) 8 -No students No AV/PC", "size":8, "equip":("meeting",)},
+"BSB109B": {"desc": "Electrical Machines Section Lab (Capacity 12)", "size": 12 },
+"BSB109": {"desc": "Electronics Lab (Capacity 19)", "size": 19 },
+"BSB109A": {"desc": "Fixed Motor Research Lab", "size": None },
+"BSB107A": {"desc": "High Performance Gaming Lab", "size": 16 },
+"BSBG11": {"desc": "Large Laser Room", "size": None },
+"BSBG15": {"desc": "Machine Shop", "size": None },
+"BSBG19A": {"desc": "Mechanical Testing Room", "size": None },
+"BSBG19": {"desc": "Metallogorphy Room", "size": None },
+"BSBG17": {"desc": "Model/General Purpose Workshop", "size": None },
+"BSBG16": {"desc": "Model/General Purpose Workshop", "size": None },
+"BSB213": {"desc": "PC Lab", "size": 42 },
+"BSB214": {"desc": "PC Lab", "size": 72 },
+"BSB105": {"desc": "PC Lab", "size": 78 },
+"BSB110": {"desc": "Physics Lab (Capacity 16)", "size": 16 },
+"BSBG09": {"desc": "Rapid Protyping Lab", "size": None },
+"BSB206": {"desc": "Seminar Room (Capacity 48)", "size": 48 },
+"BSB207": {"desc": "Seminar Room (Capacity 48)", "size": 48 },
+"BSB106": {"desc": "Seminar Room (Capacity 48)", "size": 48 },
+"BSBG08": {"desc": "Seminar Room (Capacity 48)", "size": 48 },
+"BSBG10": {"desc": "Small Laser Room", "size": None }
 
     }
 

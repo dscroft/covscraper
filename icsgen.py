@@ -1,3 +1,5 @@
+# exported from the timetable website to a calendar file (ics)
+
 #from timetableapi import *
 from covscraper import *
 import pytz
@@ -46,7 +48,7 @@ if __name__ == "__main__":
     
     usageTxt = "help"
     
-    params = {"user": None, "pass": None, "room": "", "module": "", "course": "", "date": None, "until": None}
+    params = {"user": None, "pass": None, "room": "", "module": "", "course": "", "date": None, "until": None, "lecturer": ""}
     week = timetableapi.cov_week(datetime.datetime.now())
         
     # configure flags
@@ -81,9 +83,10 @@ if __name__ == "__main__":
     # authenticate and get the timetable
     session = auth.Authenticator(params["user"], params["pass"])
     
-    if params["room"] or params["module"] or params["course"]:
-        slots = timetableapi.get_timetable( session, module=params["module"], room=params["room"], course=params["course"], date=params["date"] )
+    if params["room"] or params["module"] or params["course"] or params["lecturer"]:
+        slots = timetableapi.get_timetable( session, module=params["module"], room=params["room"], course=params["course"], date=params["date"], lecturer=params["lecturer"] )
     else:
+        print("lec")
         slots = timetableapi.get_lecturer_timetable(session)
 
     cal = ics.Calendar()

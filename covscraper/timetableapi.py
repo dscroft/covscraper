@@ -11,7 +11,8 @@ WEEKOFFSET = { "2016-2017": datetime.date(2016,7,17), \
                "2019-2020": datetime.date(2019,7,14), \
                "CU20_21": datetime.date(2020,7,5), \
                "CU21_22": datetime.date(2021,7,4), \
-               "CU22_23": datetime.date(2022,7,3) }
+               "CU22_23": datetime.date(2022,7,3), \
+               "CU23_24": datetime.date(2023,9,4) }
 
 def get_lecturer_timetable( session, date=datetime.datetime.now() ):
     """get the sessions timetabled for the person used to authenticate the current session"""
@@ -51,7 +52,7 @@ def get_register( session, slot ):
                          eventid=slot["ourEventId"], \
                          week=cov_week(slot["start"]) )
     
-    print( url )
+    #print( url )
 
     response = session.get(url)
     slot["register"] = _decode_register(response.text)
